@@ -62,7 +62,6 @@ recall = recall_score(y_train_line, y_train_pred)
 # Compare with the test case
 prediction_test = sgd_clf.predict(X_test)
 
-
 tests_3_folds = cross_val_score(sgd_clf, X_test, y_test_line, cv=3, scoring="accuracy")
 y_train_pred = cross_val_predict(sgd_clf, X_test, y_test_line, cv=3)
 
