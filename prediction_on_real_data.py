@@ -33,7 +33,7 @@ sgd_clf = joblib.load(filename)
 
 # State the data files
 obsFitsFile = '/home/vital/PycharmProjects/lime/examples/sample_data/gp121903_BR.fits'
-lineMaskFile = '/home/vital/PycharmProjects/lime/examples/sample_data/osiris_mask.txt'
+lineMaskFile = '/home/vital/PycharmProjects/lime/examples/sample_data/osiris_bands.txt'
 cfgFile = '/home/vital/PycharmProjects/lime/examples/sample_data/config_file.cfg'
 
 # Load configuration
