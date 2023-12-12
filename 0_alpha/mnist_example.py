@@ -28,7 +28,7 @@ mpl.rc('xtick', labelsize=12)
 mpl.rc('ytick', labelsize=12)
 
 # Where to save the figures
-PROJECT_ROOT_DIR = "."
+PROJECT_ROOT_DIR = ".."
 CHAPTER_ID = "classification"
 IMAGES_PATH = os.path.join(PROJECT_ROOT_DIR, "images", CHAPTER_ID)
 os.makedirs(IMAGES_PATH, exist_ok=True)

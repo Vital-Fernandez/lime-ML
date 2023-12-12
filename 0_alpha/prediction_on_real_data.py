@@ -2,6 +2,7 @@ import numpy as np
 from astropy.io import fits
 import joblib
 import lime
+from lime.tools import define_masks
 
 
 def import_osiris_fits(file_address, ext=0):
@@ -32,16 +33,20 @@ filename = 'sgd_v1.joblib'
 sgd_clf = joblib.load(filename)
 
 # State the data files
-obsFitsFile = '/home/vital/PycharmProjects/lime/examples/sample_data/gp121903_BR.fits'
-lineMaskFile = '/home/vital/PycharmProjects/lime/examples/sample_data/osiris_bands.txt'
-cfgFile = '/home/vital/PycharmProjects/lime/examples/sample_data/config_file.cfg'
+# obsFitsFile = '/home/vital/PycharmProjects/lime/examples/sample_data/gp121903_BR.fits'
+# lineMaskFile = '/home/vital/PycharmProjects/lime/examples/sample_data/osiris_bands.txt'
+# cfgFile = '/home/vital/PycharmProjects/lime/examples/sample_data/config_file.cfg'
+
+obsFitsFile = 'D:/Pycharm Projects/lime/examples/sample_data/gp121903_osiris.fits'
+lineMaskFile = 'D:/Pycharm Projects/lime/examples/sample_data/osiris_bands.txt'
+cfgFile = 'D:/Pycharm Projects/lime/examples/sample_data/osiris.toml'
 
 # Load configuration
 obs_cfg = lime.load_cfg(cfgFile)
 fit_cfg = obs_cfg['gp121903_line_fitting']
 
 # Load mask
-maskDF = lime.load_lines_log(lineMaskFile)
+maskDF = lime.load_log(lineMaskFile)
 
 # Load spectrum
 wave, flux, header = import_osiris_fits(obsFitsFile)
@@ -50,7 +55,7 @@ wave, flux, header = import_osiris_fits(obsFitsFile)
 z_obj = obs_cfg['sample_data']['z_array'][2]
 norm_flux = obs_cfg['sample_data']['norm_flux']
 gp_spec = lime.Spectrum(wave, flux, redshift=z_obj, norm_flux=norm_flux)
-gp_spec.plot_spectrum()
+gp_spec.plot.spectrum()
 
 
 # Measure the emission lines
@@ -59,26 +64,26 @@ lineList = ['H1_3750A', 'H1_4861A', 'O3_4959A', 'H1_6563A_b', 'S2_4069A', 'Ar4_4
 for i, lineLabel in enumerate(lineList):
     wave_regions = maskDF.loc[lineLabel, 'w1':'w6'].values
 
-    gp_spec.fit_from_wavelengths(lineLabel, wave_regions, user_cfg=fit_cfg)
+    gp_spec.fit.bands(lineLabel, wave_regions, fit_cfg)
 
     # Establish spectrum line and continua regions
-    idcsEmis, idcsBlue, idcsRed = gp_spec.define_masks(gp_spec.wave_rest, gp_spec.flux, gp_spec.mask, merge_continua=False)
+    idcsEmis, idcsBlue, idcsRed = define_masks(gp_spec.wave_rest, gp_spec.fit.line.mask, merge_continua=False)
     wave_i, flux_i = gp_spec.wave[idcsEmis], gp_spec.flux[idcsEmis]
     flux_i_norm = normalize_lines(flux_i)
     line_prediction = sgd_clf.predict([flux_i_norm])
     print(f'{lineLabel} (line): {line_prediction}:')
 
+print()
+
 for i, lineLabel in enumerate(lineList):
     wave_regions = maskDF.loc[lineLabel, 'w1':'w6'].values
 
-    gp_spec.fit_from_wavelengths(lineLabel, wave_regions, user_cfg=fit_cfg)
+    gp_spec.fit.bands(lineLabel, wave_regions, fit_cfg)
 
     # Establish spectrum line and continua regions
-    idcsEmis, idcsBlue, idcsRed = gp_spec.define_masks(gp_spec.wave_rest, gp_spec.flux, gp_spec.mask,
-                                                       merge_continua=False)
+    idcsEmis, idcsBlue, idcsRed = define_masks(gp_spec.wave_rest, gp_spec.fit.line.mask, merge_continua=False)
+
     wave_i, flux_i = gp_spec.wave[idcsBlue], gp_spec.flux[idcsBlue]
     flux_i_norm = normalize_lines(flux_i)
     line_prediction = sgd_clf.predict([flux_i_norm])
     print(f'{lineLabel} (continuum): {line_prediction}:')
-
-    # gp_spec.display_results(fit_report=True, plot=True, log_scale=True, frame='obs')
