@@ -7,7 +7,7 @@ from lime.plots import STANDARD_PLOT
 from matplotlib import pyplot as plt, rc_context
 from pathlib import Path
 
-cfg_file = 'config_file.toml'
+cfg_file = '../config_file.toml'
 cfg = lime.load_cfg(cfg_file)
 output_folder = Path(cfg['data_location']['output_folder'])
 figures_folder = Path('D:\Dropbox\Astrophysics\Tools\LineMesurer')
@@ -39,25 +39,24 @@ x_detection = np.linspace(0.2, 20, 100)
 y_detection = detection_function(x_detection)
 factor = 1
 
-# Data color scale
-gauss_relative_error = np.abs(df_values.gauss.to_numpy() - df_values.flux_true.to_numpy()) / df_values.flux_true.to_numpy()
-intg_relative_error = np.abs(df_values.intg.to_numpy() - df_values.flux_true.to_numpy()) / df_values.flux_true.to_numpy()
+true_err = df_values.true_err.to_numpy()/df_values.flux_true.to_numpy()
 
-label_name = {'gauss': r'$Gaussian fluxes$',
-              'intg' : r'$Integrated fluxes$'}
+param_dict = {#'true' : df_values.true_err.to_numpy()/df_values.flux_true.to_numpy(),
+              'gauss': df_values.intg_err.to_numpy()/df_values.intg.to_numpy(),
+              'intg' : df_values.gauss_err.to_numpy()/df_values.gauss.to_numpy()}
 
-param_dict = {'gauss': gauss_relative_error,
-              'intg' : intg_relative_error}
+label_name = {'gauss': 'Gaussian uncertainty',
+              'intg' : 'Integrated uncertainty',
+              'true' : 'True'}
 
-param_dict = {'gauss': gauss_relative_error,
-              'intg' : intg_relative_error}
 
-# Plot data
 STANDARD_PLOT.update({'axes.labelsize': 30, 'legend.fontsize': 20, 'figure.figsize': (10, 8)})
 
 original_cmap = plt.cm.cubehelix
 inverted_cmap = original_cmap.reversed()
 
+bin_size = np.arange(-0.4, 0.4, step=0.04)
+print(bin_size)
 with rc_context(STANDARD_PLOT):
 
     fig, ax = plt.subplots()
@@ -65,19 +64,25 @@ with rc_context(STANDARD_PLOT):
     for param_type, param_array in param_dict.items():
 
         array_data = param_array[idcs_detection]
-        mean_data, std_data = np.nanmedian(array_data), np.nanstd(array_data)
-        low, high = np.nanpercentile(array_data, [0.01, 0.99])
-        idcs_array_crop = (array_data > 0.01) & (array_data < 1.00)
-        data_crop = array_data[idcs_array_crop]
-        print(param_type, data_crop.size)
+        idcs_array_crop = (array_data > 0.01) & (array_data < 0.40)
+        data_crop = array_data[idcs_array_crop] - true_err[idcs_detection][idcs_array_crop]
 
-        ax.hist(data_crop, density=True, alpha=0.5)
+        print(param_type, data_crop.size, np.median(data_crop))
 
-        ax.update({'xlabel': r'$\frac{F_{measured}}{F_{true}} - 1$',
-                   'ylabel': r'Measurement count'})
+        if param_type != 'true':
+            ax.hist(data_crop, density=True, alpha=0.25, label=label_name[param_type], bins=bin_size)
+        else:
+            ax.hist(data_crop, hatch='/', facecolor='black', density=True, alpha=0.25, label=label_name[param_type], fill=False)
 
-        plt.tight_layout()
+    # Plot format
+    ax.update({'xlabel': r'$\frac{\sigma_{measured}-\sigma_{true}}{F_{true}}$',
+               'ylabel': r'Measurement count'})
 
-plt.show()
+    ax.legend()
+
+    plt.tight_layout()
+
+    plt.show()
+        # plt.savefig(figures_folder/f'{param_type}_coefficient_variation.png', dpi=400)
 
 

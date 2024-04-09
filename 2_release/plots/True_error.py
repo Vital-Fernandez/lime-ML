@@ -7,7 +7,7 @@ from lime.plots import STANDARD_PLOT
 from matplotlib import pyplot as plt, rc_context
 from pathlib import Path
 
-cfg_file = 'config_file.toml'
+cfg_file = '../config_file.toml'
 cfg = lime.load_cfg(cfg_file)
 output_folder = Path(cfg['data_location']['output_folder'])
 

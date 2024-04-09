@@ -1,128 +1,209 @@
 [data_location]
-#;fits_folder = D:\AstroData\CEERS_simulations_p3_for_visualization_tutorial
-#;fits_jwst = D:\AstroData\JWST_initial_spectra
-#;output_folder = D:\Dropbox\Astrophysics\Data\NIRSPEC_ml
-#;
-#;fits_folder = /mnt/AstroData/Observations/CEERS_spectra_visualization_tutorial
-#;output_folder = /home/vital/Dropbox/Astrophysics/Data/NIRSPEC_ml
-
 fits_folder = "D:/AstroData/CEERS_spectra_visualization_tutorial"
-output_folder = "D:/Dropbox/Astrophysics/Data/NIRSPEC_ml"
+#output_folder = "/home/vital/Dropbox/Astrophysics/Data/LiMe_ml"
+output_folder = "/home/vital/Astrodata/LiMe_ml"
 
+[data_grid]
+headers =['amp', 'sigma',
+          'noise', 'delta',
+          'amp_noise_ratio', 'sigma_lambda_ratio',
+          'intg_flux', 'intg_flux_err',
+          'profile_flux', 'profile_flux_err',
+          'flux_true', 'true_err',
+          'cont', 'cont_err',
+          'm_cont', 'n_cont',
+          'line_pixels', 'box_pixels',
+          'detection', 'success_fitting',
+          'mu_index']
 
-[jwst_spectra]
-obj_list = ["obj4590", "obj8140", "obj9922", "obj10612"]
-z_array = [7.662,8.498,5.276,2.742]
-noise_region_array = [5050,5150]
-norm_flux = 1
+amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
+sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
+delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
+noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
+db_address = "/home/vital/Dropbox/Astrophysics/Data/LiMe_ml/sample_grid_database.txt"
 
-[NIRSpec_params]
-G140M_wave_lims_array=[0.5,2.0]
-G140M_R_lims_array=[355.0,1436.0]
-
-G235M_wave_lims_array=[1.5,3.5]
-G235M_R_lims_array=[636.0,1500.0]
-
-G395M_wave_lims_array=[2.5,6.0]
-G395M_R_lims_array=[631.0,1530.0]
-
-PRISM_wave_lims_array=[0.5,6.0]
-PRISM_R_lims_array=[30.0,422.0]
-
-
-[ml_grid_design]
-SN_low_limit = 2.5
+box_limits = [20, 20]
 box_size_pixels = 11
-seed_value = 1234
-nirspec_resolution_um = 0.00106
-sample_size = 500000
-training_size = 400000
-sample_line_percentage = 50
-mask_max_size = 750
-training_params_file = "nirspec_training_params_grid.csv"
-mu_limits_array = [3,7]
-
-nirspec_wavelength_limits_um_array = [0.6,5.3]
-
-Deltalambda_boundaries_um_array = [0.00018,0.0036]
-v_pixel_kmpers_array = [80,215]
-
-sigma_gas_boundaries_kms_array = [50,500]
-sigma_gas_boundaries_um_array = [0.0001,0.01]
-sigma_gas_boundaries_A_array = [1,100]
-
-amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
-sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
-delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
-noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
+training_data_file = "/home/vital/Dropbox/Astrophysics/Data/LiMe_ml/line_detection_training_set.csv"
+true_faction_percentage = 50
+int_sample_size = 5000
+res_sample_size = 500
+int_sample_limits = [0, 1]
+res_sample_limits = [0.10, 3.60]
+small_box_reslimit = 1.625
+large_box_reslimit = 4.125
+small_box_size = 13
+large_box_size = 33
+#version = 'v1' Initial model
+version = 'v2' # Randome noise
+conversion_array_log = [0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.24, 0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.42, 0.44, 0.46, 0.48, 0.5, 0.55, 0.625, 0.7, 0.775, 0.85, 0.925, 1.0]
+conversion_array_min_max = [0.0, 0.03125, 0.0625 , 0.09375, 0.125  , 0.15625, 0.1875 ,
+                            0.21875, 0.25   , 0.28125, 0.3125 , 0.34375, 0.375  , 0.40625,
+                            0.4375 , 0.46875, 0.5    , 0.53125, 0.5625 , 0.59375, 0.625  ,
+                            0.65625, 0.6875 , 0.71875, 0.75   , 0.78125, 0.8125 , 0.84375,
+                            0.875  , 0.90625, 0.9375 , 0.96875, 1.0]
+norm_base = 10000
+training_fraction = 0.90
 
 
-[ml_grid_design_v2]
-amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
-sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
-delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
-noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
+[flux_testing_single]
+line = 'H1_4861A'
+mu = 4861.0
+data_points = 400
+width_factor = 4
 
 
-[amp_distribution]
-param_label = "amp"
-dist = "uniform"
-units = "flux"
-low_limit = 0.1
-high_limit = 1000
+[disp_wavelength_ranges]
+example_dispensers = ['MIKE_BLUE', 'MIKE_RED', 'XSHOOTER_UVB',
+                      'XSHOOTER_VIS', 'XSHOOTER_NIR', 'NIRSPEC_PRISM', 'NIRSPEC_G235M']
 
-[mu_index_distribution]
-param_label = "mu_index"
-dist = "discrete_uniform"
-units = "pix"
-low_limit = 0
-high_limit = "box_size"
+MIKE_BLUE_wave = [3200.0, 5000.0]
+MIKE_RED_wave = [4900.0, 10000.0]
+MIKE_BLUE_R = [22000.0, 28000.0]
+MIKE_RED_R = [65000.0, 83000.0]
 
-[sigma_distribution]
-param_label = "sigma"
-dist = "uniform"
-units = "um"
-low_limit = 0.0001
-high_limit = 0.01
+XSHOOTER_UVB_wave = [2936.0, 5930.0]
+XSHOOTER_VIS_wave = [5253.0, 10489.0]
+XSHOOTER_NIR_wave = [9827.0, 24807.0]
 
-[lambda_step_distribution]
-param_label = "lambda_step"
-dist = "uniform"
-units = "um"
-low_limit = 0.00018
-high_limit = 0.0036
+XSHOOTER_UVB_R = [3300, 9100]
+XSHOOTER_VIS_R = [5400, 17400]
+XSHOOTER_NIR_R = [3500, 11300]
 
-[noise_distribution]
-param_label = "noise"
-dist = "uniform"
-units = "flux"
-low_limit = 0.01
-high_limit = 2
+NIRSPEC_PRISM_wave =[5000, 60000]
+NIRSPEC_G235M_wave =[1500, 35000]
+NIRSPEC_PRISM_R =[30.0, 422.0]
+NIRSPEC_G235M_R =[636.0, 1500.0]
 
-[amp_noise_ratio_distribution]
-param_label = "amp_noise_ratio"
-dist = "uniform"
-units = "none"
-low_limit = 0.05
-high_limit = 1000
+DESI_B_R = [2000.0, 9000.0]
+DESI_R_R = [2000.0, 9000.0]
+DESI_Z_R = [2000.0, 9000.0]
 
-[sigma_lambda_ratio_distribution]
-param_label = "sigma_lambda_ratio"
-dist = "uniform"
-units = "none"
-low_limit = 0.2
-high_limit = 2.5
+DESI_B_WAVE = [3600.0, 6000.0]
+DESI_R_WAVE = [5600.0, 7800.0]
+DESI_Z_WAVE = [7400.0, 9900.0]
 
-[n_cont10_distribution]
-param_label = "n_cont10"
-dist = "uniform"
-units = "flux"
-low_limit = 0
-high_limit = 10
 
-[n_cont1_distribution]
-param_label = "n_cont1"
-dist = "uniform"
-units = "s"
-low_limit = 0.5
-high_limit = 1
+#[jwst_spectra]
+#obj_list = ["obj4590", "obj8140", "obj9922", "obj10612"]
+#z_array = [7.662,8.498,5.276,2.742]
+#noise_region_array = [5050,5150]
+#norm_flux = 1
+#
+#[NIRSpec_params]
+#G140M_wave_lims_array=[0.5,2.0]
+#G140M_R_lims_array=[355.0,1436.0]
+#
+#G235M_wave_lims_array=[1.5,3.5]
+#G235M_R_lims_array=[636.0,1500.0]
+#
+#G395M_wave_lims_array=[2.5,6.0]
+#G395M_R_lims_array=[631.0,1530.0]
+#
+#PRISM_wave_lims_array=[0.5,6.0]
+#PRISM_R_lims_array=[30.0,422.0]
+#
+#
+#[ml_grid_design]
+#SN_low_limit = 2.5
+#box_size_pixels = 11
+#seed_value = 1234
+#nirspec_resolution_um = 0.00106
+#sample_size = 500000
+#training_size = 400000
+#sample_line_percentage = 50
+#mask_max_size = 750
+#training_params_file = "nirspec_training_params_grid.csv"
+#mu_limits_array = [3,7]
+#
+#nirspec_wavelength_limits_um_array = [0.6,5.3]
+#
+#Deltalambda_boundaries_um_array = [0.00018,0.0036]
+#v_pixel_kmpers_array = [80,215]
+#
+#sigma_gas_boundaries_kms_array = [50,500]
+#sigma_gas_boundaries_um_array = [0.0001,0.01]
+#sigma_gas_boundaries_A_array = [1,100]
+#
+#amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
+#sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
+#delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
+#noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
+#
+#
+#[ml_grid_design_v2]
+#amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
+#sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
+#delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
+#noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
+#
+#[ml_grid_design_v4]
+#amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
+#sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
+#delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
+#noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
+#
+#
+#
+#[amp_distribution]
+#param_label = "amp"
+#dist = "uniform"
+#units = "flux"
+#low_limit = 0.1
+#high_limit = 1000
+#
+#[mu_index_distribution]
+#param_label = "mu_index"
+#dist = "discrete_uniform"
+#units = "pix"
+#low_limit = 0
+#high_limit = "box_size"
+#
+#[sigma_distribution]
+#param_label = "sigma"
+#dist = "uniform"
+#units = "um"
+#low_limit = 0.0001
+#high_limit = 0.01
+#
+#[lambda_step_distribution]
+#param_label = "lambda_step"
+#dist = "uniform"
+#units = "um"
+#low_limit = 0.00018
+#high_limit = 0.0036
+#
+#[noise_distribution]
+#param_label = "noise"
+#dist = "uniform"
+#units = "flux"
+#low_limit = 0.01
+#high_limit = 2
+#
+#[amp_noise_ratio_distribution]
+#param_label = "amp_noise_ratio"
+#dist = "uniform"
+#units = "none"
+#low_limit = 0.05
+#high_limit = 1000
+#
+#[sigma_lambda_ratio_distribution]
+#param_label = "sigma_lambda_ratio"
+#dist = "uniform"
+#units = "none"
+#low_limit = 0.2
+#high_limit = 2.5
+#
+#[n_cont10_distribution]
+#param_label = "n_cont10"
+#dist = "uniform"
+#units = "flux"
+#low_limit = 0
+#high_limit = 10
+#
+#[n_cont1_distribution]
+#param_label = "n_cont1"
+#dist = "uniform"
+#units = "s"
+#low_limit = 0.5
+#high_limit = 1

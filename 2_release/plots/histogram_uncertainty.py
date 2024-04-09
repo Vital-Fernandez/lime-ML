@@ -7,7 +7,7 @@ from lime.plots import STANDARD_PLOT
 from matplotlib import pyplot as plt, rc_context
 from pathlib import Path
 
-cfg_file = 'config_file.toml'
+cfg_file = '../config_file.toml'
 cfg = lime.load_cfg(cfg_file)
 output_folder = Path(cfg['data_location']['output_folder'])
 figures_folder = Path('D:\Dropbox\Astrophysics\Tools\LineMesurer')
@@ -43,51 +43,41 @@ factor = 1
 gauss_relative_error = np.abs(df_values.gauss.to_numpy() - df_values.flux_true.to_numpy()) / df_values.flux_true.to_numpy()
 intg_relative_error = np.abs(df_values.intg.to_numpy() - df_values.flux_true.to_numpy()) / df_values.flux_true.to_numpy()
 
-label_name = {'gauss': r'$\frac{F_{Gaussian}}{F_{true}} - 1$',
-              'intg' : r'$\frac{F_{integration}}{F_{true}} - 1$'}
+label_name = {'gauss': r'$Gaussian fluxes$',
+              'intg' : r'$Integrated fluxes$'}
+
+param_dict = {'gauss': gauss_relative_error,
+              'intg' : intg_relative_error}
 
 param_dict = {'gauss': gauss_relative_error,
               'intg' : intg_relative_error}
 
 # Plot data
-STANDARD_PLOT.update({'axes.labelsize': 30, 'legend.fontsize': 15, 'figure.figsize': (10, 8)})
+STANDARD_PLOT.update({'axes.labelsize': 30, 'legend.fontsize': 20, 'figure.figsize': (10, 8)})
 
 original_cmap = plt.cm.cubehelix
 inverted_cmap = original_cmap.reversed()
 
+with rc_context(STANDARD_PLOT):
 
-for param_type, param_array in param_dict.items():
+    fig, ax = plt.subplots()
 
-    with rc_context(STANDARD_PLOT):
+    for param_type, param_array in param_dict.items():
 
-        fig, ax = plt.subplots()
+        array_data = param_array[idcs_detection]
+        mean_data, std_data = np.nanmedian(array_data), np.nanstd(array_data)
+        low, high = np.nanpercentile(array_data, [0.01, 0.99])
+        idcs_array_crop = (array_data > 0.01) & (array_data < 1.00)
+        data_crop = array_data[idcs_array_crop]
+        print(param_type, data_crop.size)
 
-        # Cosmic ray limits
-        ax.axvline(0.3, label='Cosmic ray boundary', linestyle='--', color='black')
+        ax.hist(data_crop, density=True, alpha=0.5)
 
-        # Gaussian measurements
-        ax.plot(x_detection, y_detection, color='black', label='Detection boundary')
-
-        # Measurement points
-        ratio_scatter = ax.scatter(x_ratios[idcs_detection], y_ratios[idcs_detection], c=param_array[idcs_detection]*factor,
-                                   cmap=inverted_cmap, edgecolor=None, vmin=0*factor, vmax=0.3*factor)
-        cbar = plt.colorbar(ratio_scatter, ax=ax)
-        cbar.set_label(label_name[param_type], rotation=270, labelpad=70)
-
-        # Failure points
-        ax.scatter(x_ratios[idcs_failure], y_ratios[idcs_failure], marker='x', facecolor='red',
-                   label='Gaussian fit failure')
-
-        ax.update({'xlabel': r'$\frac{\sigma_{gas}}{\Delta\lambda_{inst}}$',
-                   'ylabel': r'$\frac{A_{gas}}{\sigma_{noise}}$'})
-
-        ax.set_yscale('log')
-
-        ax.legend(loc=4, framealpha=1)
+        ax.update({'xlabel': r'$\frac{F_{measured}}{F_{true}} - 1$',
+                   'ylabel': r'Measurement count'})
 
         plt.tight_layout()
 
-        plt.show()
-        # plt.savefig(figures_folder/f'{param_type}_relative_error.png', dpi=400)
+plt.show()
 
 
