@@ -1,22 +1,75 @@
+# import numpy as np
+# from scipy.signal import convolve2d
+#
+# AA = np.array([[False, True, False, False, False, True, False, False, False, False, False, True, False],
+#                [False, True, False, False, False, True, False, False, False, False, False, True, False]])
+#
+# propagation = 2
+#
+# # generate 2D kernel
+# k = np.r_[np.zeros(propagation), np.ones(propagation+1)][None]
+#
+# out = convolve2d(AA, k, mode='same').astype(bool)
+#
+# print(out)
+
 import numpy as np
 
-# data
-n_data = 8
-x_data = np.arange(n_data)
-n_mc = 4
+# Number of positions to propagate the array
+propagation = 2
 
-# I varied the 2nd and 3rd list to better visualize the functionality
-y_true = np.array([[0.2, 2.3, 5.9, 7.0, 6.2, 4.7, 2.9],
-                  [1.2, 1.3, 4.9, 6.9, 4.2, 4.7, 2.9],
-                  [2.2, 2.3, 7.9, 6.2, 5.2, 3.7, 1.9]])
-noise = np.random.normal(0, 0.05, size=(y_true.shape[0], y_true.shape[1], n_mc))
-y_1d = y_true[:, :, np.newaxis] + noise
+# Original array
+AA = np.array([[False, True, False, False, False, True, False, False, False, False, False, True, False],
+             [False, True, False, False, False, True, False, False, False, False, False, True, False]])
+AA = np.transpose(AA)
 
-y_image = np.tile(y_true[:, None, :], (1, n_data, 1))
-y_image_mc = np.tile(y_image[..., np.newaxis], (1, 1, 1, n_mc))
-y_image_mc = y_image_mc + noise[:, np.newaxis, :, :]
-y_image_binary = y_image_mc > x_data[::-1, None, None]
-y_
+def prop_func(A):
+
+    B = np.zeros(A.shape, dtype=bool)
+
+    # Compute the indices of the True values and make the two next to it True as well
+    idcs_true = np.argwhere(A) + np.arange(propagation + 1)
+    idcs_true = idcs_true.flatten()
+    idcs_true = idcs_true[idcs_true < A.size] # in case the error propagation gives a great
+    B[idcs_true] = True
+    return B
+
+# Apply prop_func along the rows (axis=1)
+BB = np.apply_along_axis(prop_func, 0, AA)
+
+# Array
+print(f'Original array     AA = {AA}')
+print(f'New array (2 true) BB = {BB}')
+
+for i in range(AA.shape[0]):
+    print(i, AA[i, 0], BB[i, 0])
+
+# orig_detect = np.argwhere(pred_array[:, 0]) + range_box
+# orig_detect = orig_detect.flatten()
+# orig_detect = orig_detect[orig_detect <= pred_array[:, 0].size]
+# maskOrig[orig_detect] = True
+
+
+
+# import numpy as np
+#
+# # data
+# n_data = 8
+# x_data = np.arange(n_data)
+# n_mc = 4
+#
+# # I varied the 2nd and 3rd list to better visualize the functionality
+# y_true = np.array([[0.2, 2.3, 5.9, 7.0, 6.2, 4.7, 2.9],
+#                   [1.2, 1.3, 4.9, 6.9, 4.2, 4.7, 2.9],
+#                   [2.2, 2.3, 7.9, 6.2, 5.2, 3.7, 1.9]])
+# noise = np.random.normal(0, 0.05, size=(y_true.shape[0], y_true.shape[1], n_mc))
+# # y_1d = y_true[:, :, np.newaxis] + noise
+#
+# y_image = np.tile(y_true[:, None, :], (1, n_data, 1))
+# y_image_mc = np.tile(y_image[..., np.newaxis], (1, 1, 1, n_mc))
+# y_image_mc = y_image_mc + noise[:, np.newaxis, :, :]
+# y_image_binary = y_image_mc > x_data[::-1, None, None]
+
 
 # I have an array A with dimensions (3, 8, 7, 4) and an array B with dimensions (3, 7, 4) I would like to add to each of
 # columns in array (its second axis) the corresponding value the values from array B. How do I do that?
@@ -35,16 +88,16 @@ y_
 # Reshape A to add a singleton dimension, making its shape (3, 8, 1)
 
 # Use numpy.tile to repeat A_reshaped 8 times along the new axis, resulting in shape (3, 8, 8)
-images_gpt = np.tile(y_true[:, :, np.newaxis], (1, 1, 8))
-
-images = np.tile(y_true[:, None, :], (1, n_data, 1))
-noise = np.random.rand(3, 8, 4) - 0.5
-np.random.normal(0, 0.05, size=(3, 8, 4))
-
-images = images > x_data[::-1, None]
-images = images.astype(float)
-
-print(images)
+# images_gpt = np.tile(y_true[:, :, np.newaxis], (1, 1, 8))
+#
+# images = np.tile(y_true[:, None, :], (1, n_data, 1))
+# noise = np.random.rand(3, 8, 4) - 0.5
+# np.random.normal(0, 0.05, size=(3, 8, 4))
+#
+# images = images > x_data[::-1, None]
+# images = images.astype(float)
+#
+# print(images)
 
 # I have 2D numpy array with shape (3,8) I would link to add a random amount of noise to each row 4 times hence generating a
 # 3,8,4 array. Could you suggest me how to do this with numpy fancy indexing?
