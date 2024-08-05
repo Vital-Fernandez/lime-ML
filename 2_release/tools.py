@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 import joblib
-from lime import load_log, save_log
+from lime import load_frame, save_frame
 from lime import detection_function
-from lime.plots import STANDARD_PLOT
+from lime.plots import theme
 from matplotlib import pyplot as plt, rc_context
 from pathlib import Path
 
@@ -14,8 +14,11 @@ from sklearn.metrics import precision_score, recall_score
 from sklearn.ensemble import RandomForestClassifier
 
 
+STANDARD_PLOT = theme.fig_defaults()
 STANDARD_PLOT['axes.labelsize'] = 20
 STANDARD_PLOT['figure.figsize'] = (11, 11)
+
+c_kmpers = 299792.458  # Km/s
 
 # Training algorithms
 algorithm_dict = {'GradientDescent': SGDClassifier(max_iter=1000),

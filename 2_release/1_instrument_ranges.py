@@ -1,14 +1,9 @@
 import numpy as np
 import lime
-from matplotlib import pyplot as plt, rcParams, cm
+from matplotlib import pyplot as plt, cm, rc_context
 from lime.recognition import detection_function
-from lime.plots import STANDARD_PLOT
+from tools import STANDARD_PLOT, c_kmpers
 
-c_kmpers = 299792.458  # Km/s
-
-STANDARD_PLOT['axes.labelsize'] = 20
-
-rcParams.update(STANDARD_PLOT)
 
 cfg = lime.load_cfg('config_file.toml')
 
@@ -21,19 +16,22 @@ x_range = np.linspace(0.2, 20, 50)
 sigma_vel_range = np.linspace(15, 120, 100)
 function = detection_function(x_range)
 
-fig, ax = plt.subplots(figsize=(12, 12))
-cmap, color_i = cm.get_cmap(), 0
+# Plot the instrument regions
+STANDARD_PLOT['axes.labelsize'] = 20
+with rc_context(STANDARD_PLOT):
+    fig, ax = plt.subplots(figsize=(12, 12))
 
-# Loop though the instrumental ranges
-example_dispensers = ['DESI_B', 'DESI_R', 'DESI_Z']
-for dispenser in example_dispensers:
-    R_lim = np.array(cfg['disp_wavelength_ranges'][f"{dispenser}_R"])
-    sigma_lim = np.array((sigma_vel_range[0], sigma_vel_range[-1]))
-    x_min, x_max = (1/c_kmpers) * sigma_lim * R_lim
-    color_curve = cmap(color_i / len(example_dispensers))
-    label = f'{dispenser}: {x_min:.2f}-{x_max:.2f}'
-    ax.axvspan(x_min, x_max, alpha=0.2, color=color_curve, label=label)
-    color_i += 1
+    # Loop though the instrumental ranges
+    example_dispensers = ['DESI_B', 'NIRSPEC_PRISM', 'NIRSPEC_G235M']
+
+    cmap = cm.get_cmap('viridis', len(example_dispensers))
+    color_curve = [cmap(i) for i in range(len(example_dispensers))]
+    for i, dispenser in enumerate(example_dispensers):
+        R_lim = np.array(cfg['disp_wavelength_ranges'][f"{dispenser}_R"])
+        sigma_lim = np.array((sigma_vel_range[0], sigma_vel_range[-1]))
+        x_min, x_max = (1/c_kmpers) * sigma_lim * R_lim
+        label = f'{dispenser}: {x_min:.2f}-{x_max:.2f}'
+        ax.axvspan(x_min, x_max, alpha=0.2, color=color_curve[i], label=label)
 
 # Plot the detection function
 ax.plot(x_range, function)

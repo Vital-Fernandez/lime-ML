@@ -4,55 +4,54 @@ import pandas as pd
 from lime.model import gaussian_model
 from lime.recognition import detection_function
 from pathlib import Path
-from matplotlib import pyplot as plt
-from tools import normalization_1d
-from pip._internal.cli.progress_bars import get_download_progress_renderer
 from tqdm import tqdm
 from itertools import product
 
+# Configuration file
 cfg_file = 'config_file.toml'
 cfg = lime.load_cfg(cfg_file)
-output_folder = Path(cfg['data_location']['output_folder'])
+sample_params = cfg['sample_data_v3']
 
-# Recover the grid parameters
-amp_array = np.array(cfg['data_grid']['amp_array'])
-sigma_gas_array = np.array(cfg['data_grid']['sigma_gas_um_array']) * 1000
-delta_lam_array = np.array(cfg['data_grid']['delta_lambda_um_array']) * 1000
-noise_sig_array = np.array(cfg['data_grid']['noise_array'])
-
-version = cfg['data_grid']['version']
-limit_O, limit_f = cfg['data_grid']['box_limits']
-box_size = limit_O + limit_f
+# Data location
+version = sample_params['version']
+output_folder = Path(sample_params['output_folder'])
 sample_database = output_folder/f'sample_database_{version}.txt'
-small_box_reslimit = cfg['data_grid']['small_box_reslimit']
-small_box_width = cfg['data_grid']['small_box_size']
-large_box_width = cfg['data_grid']['large_box_size']
 
-# Perform fits check
-lime_fit_check = False
+# Grid parameters
+amp_array = np.array(sample_params['amp_array'])
+sigma_gas_array = np.array(sample_params['sigma_gas_um_array']) * 1000
+delta_lam_array = np.array(sample_params['delta_lambda_um_array']) * 1000
+noise_sig_array = np.array(sample_params['noise_array'])
 
-# Sample size
-int_sample_size = cfg['data_grid']['int_sample_size']
-int_sample_limts = cfg['data_grid']['int_sample_limits']
+# Box parameters
+limit_O, limit_f = sample_params['box_limits']
+small_box_reslimit = sample_params['small_box_reslimit']
+small_box_width = sample_params['small_box_size']
+large_box_width = sample_params['large_box_size']
+box_size = limit_O + limit_f
+number_sigmas = 8
 
-res_sample_size = cfg['data_grid']['res_sample_size']
-res_sample_limts = cfg['data_grid']['res_sample_limits']
+# Sample parameters
+int_sample_size = sample_params['int_sample_size']
+int_sample_limts = sample_params['int_sample_limits']
+
+res_sample_size = sample_params['res_sample_size']
+res_sample_limts = sample_params['res_sample_limits']
+resolution_fix = sample_params['resolution_fix']
 
 int_ratio_range = np.logspace(int_sample_limts[0], int_sample_limts[1], int_sample_size, base=10000)
 res_ratio_range = np.linspace(res_sample_limts[0], res_sample_limts[1], res_sample_size)
 
 sample_size = int_sample_size * res_sample_size
-noise_array = np.random.uniform(0.50,10, size=sample_size)
-resolution_fix = 1
+noise_array = np.random.uniform(0.50, 10, size=sample_size)
 
 # Line parameters
-line = cfg['flux_testing_single']['line']
-mu_line = cfg['flux_testing_single']['mu']
-data_points = cfg['flux_testing_single']['data_points']
-width_factor = cfg['flux_testing_single']['width_factor']
+line = sample_params['line']
+data_points = sample_params['data_points']
+width_factor = sample_params['width_factor']
 
-# Create empty container for the data
-df_values = pd.DataFrame(index=np.arange(sample_size), columns=cfg['data_grid']['headers'])
+# Data containers
+df_values = pd.DataFrame(index=np.arange(sample_size), columns=sample_params['headers'])
 
 x_line_container = np.full([sample_size, box_size], np.nan)
 y_line_container = np.full([sample_size, box_size], np.nan)
@@ -63,6 +62,16 @@ combinations = np.array(list(product(int_ratio_range, res_ratio_range)))
 bar = tqdm(combinations, desc="Item", mininterval=0.2, unit=" combinations")
 # pbar = tqdm(array_product, unit=" line")
 
+# Perform fits check
+lime_fit_check = False
+
+# Generate x range
+mu_line = 0
+w0 = - data_points / 2
+wf = data_points / 2
+wave = np.arange(w0, wf, resolution_fix)
+
+# Loop through the conditions
 for idx, (int_ratio, res_ratio) in enumerate(bar):
 
     noise_i = noise_array[idx]
@@ -70,22 +79,16 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
 
     amp = int_ratio * noise_i
     sigma = res_ratio * resolution_fix
-    inst_delta = resolution_fix
 
     # Continuum level
     cont = 0
 
-    # Wavelength limits spectrum
-    w0 = mu_line - inst_delta * data_points / 2
-    wf = mu_line + inst_delta * data_points / 2
-
     # Compute spectrum
-    wave = np.arange(w0, wf, inst_delta)
-    flux = gaussian_model(wave, amp, mu_line, sigma) + random_noise + cont
+    flux = gaussian_model(wave, amp, 0, sigma) + random_noise + cont
 
     # Theoretical flux
     theo_flux = amp * 2.5066282746 * sigma
-    true_error = noise_i * np.sqrt(2 * width_factor * inst_delta * sigma)
+    true_error = noise_i * np.sqrt(2 * width_factor * resolution_fix * sigma)
 
     if lime_fit_check:
 
@@ -102,14 +105,14 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
         success_fit = True if spec.fit.line.observations == 'no' else False
 
         if success_fit:
-            gauss_flux, gauss_err = spec.log.loc[line, ['profile_flux', 'profile_flux_err']].to_numpy()
+            gauss_flux, gauss_err = spec.frame.loc[line, ['profile_flux', 'profile_flux_err']].to_numpy()
         else:
             gauss_flux, gauss_err = np.nan, np.nan
 
         # Store the measurements
-        intg_flux, intg_err, cont, cont_err, m_cont, n_cont = spec.log.loc[line, ['intg_flux', 'intg_flux_err',
-                                                                                  'cont', 'cont_err',
-                                                                                  'm_cont', 'n_cont']].to_numpy()
+        intg_flux, intg_err, cont, cont_err, m_cont, n_cont = spec.frame.loc[line, ['intg_flux', 'intg_flux_err',
+                                                                                    'cont', 'cont_err',
+                                                                                    'm_cont', 'n_cont']].to_numpy()
 
     else:
 
@@ -120,7 +123,7 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
         line_pixels, box_pixels = np.nan, np.nan
         detection, success_fit = np.nan, np.nan
 
-    line_pixels = res_ratio * 8
+    line_pixels = sigma * number_sigmas
     box_pixels = small_box_width if res_ratio < small_box_reslimit else large_box_width
 
     # Detection label
@@ -139,8 +142,8 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
     mu_index = np.searchsorted(wave_box, mu_line)
 
     df_values.loc[idx, :] = (amp, sigma,
-                           noise_i, inst_delta,
-                           amp/noise_i, sigma/inst_delta,
+                           noise_i, resolution_fix,
+                           amp/noise_i, sigma/resolution_fix,
                            intg_flux, intg_err,
                            gauss_flux, gauss_err,
                            theo_flux, true_error,
@@ -149,9 +152,6 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
                            line_pixels, box_pixels,
                            detection, success_fit,
                            mu_index)
-
-
-# Save the sample database
 
 
 # Rearrange the lines training sample into a SAMPLE_SIZE x BOX_SIZE array
@@ -164,8 +164,7 @@ flux_db = pd.DataFrame(data=y_line_container, columns=column_names)
 wave_db.to_csv(f'{output_folder}/sample_wave_{version}.csv', index=False)
 flux_db.to_csv(f'{output_folder}/sample_flux_{version}.csv', index=False)
 np.savetxt(f'{output_folder}/sample_detection_{version}.csv', detect_container)
-lime.save_log(df_values, sample_database)
-print(df_values)
+lime.save_frame(sample_database, df_values)
 
 
 
