@@ -208,9 +208,9 @@ class TrainingSampleScaler:
 
         # Load the database
         database_file = self.data_folder/f'{self.sample_prefix}_{self.version}.csv'
-        print(f'Loading training database at: {database_file}')
+        print(f'\nLoading training database at: {database_file}')
         self.sample_db = pd.read_csv(database_file)
-        print('-- complete')
+        print('- complete')
 
         # Slice the data
         self.type_array = self.sample_db["spectral_number"].to_numpy(int)
@@ -229,91 +229,6 @@ class TrainingSampleScaler:
 
         return
 
-    def biBox_1D_sample(self, output_folder, limit_box, box_size, norm_base, approximation=None, label=None):
-
-        # Set target region positive
-        idcs_detect = (self.params_db.sigma_lambda_ratio < limit_box) & (self.detect_array)
-        self.params_db.loc[idcs_detect, 'detection'] = True
-        self.params_db.loc[~idcs_detect, 'detection'] = False
-        self.detect_array[idcs_detect] = True
-        self.detect_array[~idcs_detect] = False
-
-        # Crop to an even number of true and false cases
-        idcs_detect = self.detect_array == 1
-        if (idcs_detect).sum() > (~idcs_detect).sum():
-            idcs_false = self.detect_array == 0
-            idcs_true_crop =  np.where(~idcs_false)[0][:idcs_false.sum()]
-            idcs_true = np.zeros_like(idcs_false)
-            idcs_true[idcs_true_crop] = True
-        else:
-            idcs_true = self.detect_array == 1
-            idcs_false_crop =  np.where(~idcs_true)[0][:idcs_true.sum()]
-            idcs_false = np.zeros_like(idcs_true)
-            idcs_false[idcs_false_crop] = True
-
-        idcs_sample = idcs_true | idcs_false
-
-        self.params_db = self.params_db.loc[idcs_sample]
-        self.params_db = self.params_db.reset_index(drop=True)
-
-        self.wave_db = self.wave_db.loc[idcs_sample]
-        self.wave_db = self.wave_db.reset_index(drop=True)
-
-        self.flux_db = self.flux_db.loc[idcs_sample]
-        self.flux_db = self.flux_db.reset_index(drop=True)
-
-        self.detect_array = self.detect_array[idcs_sample]
-
-        # Crop the grid
-        mu_idx = self.params_db['mu_index'].unique()
-        assert mu_idx.size == 1
-        mu_idx = mu_idx[0]
-
-        start_index = int(max(0, mu_idx - box_size // 2))
-        end_index = int(start_index + box_size)
-
-        self.wave_db = self.wave_db.iloc[:, start_index:end_index]
-        self.flux_db = self.flux_db.iloc[:, start_index:end_index]
-
-        # Normalize the data
-        array_1D = self.flux_db.to_numpy()
-        array_1D = self.normalization_1d(array_1D, norm_base)
-        self.flux_db = pd.DataFrame(data=array_1D, columns=self.flux_db.columns)
-
-        # Generate the 2D data
-        if approximation is not None:
-            approximation = np.atleast_1d(approximation)
-            array_2D = np.tile(array_1D[:, None, :], (1, approximation.size, 1))
-            array_2D = array_2D > approximation[::-1, None]
-            array_2D = array_2D.astype(int)
-            array_2D = array_2D.reshape((array_1D.shape[0], 1, -1))
-            array_2D = array_2D.squeeze()
-
-            hdrs = np.full(approximation.size * box_size, 'Pixel')
-            hdrs = np.char.add(hdrs, np.arange(approximation.size * box_size).astype(str))
-            self.image_db = pd.DataFrame(data=array_2D, columns=hdrs)
-
-        # Reshuffle
-        self.shuffle_databases()
-
-        # Save the 1D
-        subfolder = Path(output_folder)/f'_results_{label}'
-        subfolder.mkdir(parents=True, exist_ok=True)
-        self.wave_db.to_csv(f'{subfolder}/sample_wave_{label}.csv', index=False)
-        self.flux_db.to_csv(f'{subfolder}/sample_flux_{label}.csv', index=False)
-        np.savetxt(f'{subfolder}/sample_detection_{label}.csv', self.detect_array, fmt='%i')
-        save_log(self.params_db, f'{subfolder}/database_{label}.csv')
-
-        # Save the 2D array
-        if approximation is not None:
-            self.image_db.to_csv(f'{subfolder}/sample_image_{label}.csv', index=False)
-
-        # Save the plot with the data points
-        self.plot_training_sample(subfolder, label, limit_box)
-
-        return
-
-
     def run_scale(self):
 
         # Normalize the data
@@ -321,7 +236,7 @@ class TrainingSampleScaler:
         self.sample_db.iloc[:, 3:] = array_1D
 
         # Generate the 2D data
-        approximation = self.cfg.get('conversion_array_min_max')
+        approximation = None # self.cfg.get('conversion_array_min_max')
         if approximation is not None:
             approximation = np.atleast_1d(approximation)
             array_2D = np.tile(array_1D[:, None, :], (1, approximation.size, 1))
@@ -341,98 +256,24 @@ class TrainingSampleScaler:
         # Reshuffle
         # self.shuffle_databases()
 
+        # Make plot to review the training sample
+        plot_address = self.data_folder / f'{self.scale}_{self.sample_prefix}_{self.version}_diagnostic_plot.png'
+        print(f'\nMaking review plot: {plot_address}')
+        self.plot_training_sample(self.cfg, self.sample_db, plot_address)
+        print(f'- complete')
+
         # Save the 1D
-        self.sample_db.to_csv(self.data_folder/f'{self.scale}_{self.sample_prefix}_{self.version}.txt')
+        database_address = self.data_folder/f'{self.scale}_{self.sample_prefix}_{self.version}.txt'
+        print(f'\nSaving 1D database: {database_address}')
+        self.sample_db.to_csv(database_address)
+        print(f'- complete')
 
         # Save the 2D array
         if self.image_db is not None:
-            print('\nSaving 2D database')
-            self.image_db.to_csv(self.data_folder / f'{self.scale}_{self.sample_prefix}_{self.version}_image.txt')
-            print('-- saved')
-
-        return
-
-    def biBox_1D_sample_log_min_max(self, output_folder, limit_box, box_size, norm_base, approximation=None, label=None):
-
-        # Set target region positive
-        idcs_detect = (self.params_db.sigma_lambda_ratio < limit_box) & (self.detect_array)
-        self.params_db.loc[idcs_detect, 'detection'] = True
-        self.params_db.loc[~idcs_detect, 'detection'] = False
-        self.detect_array[idcs_detect] = True
-        self.detect_array[~idcs_detect] = False
-
-        # Crop to an even number of true and false cases
-        idcs_detect = self.detect_array == 1
-        if (idcs_detect).sum() > (~idcs_detect).sum():
-            idcs_false = self.detect_array == 0
-            idcs_true_crop =  np.where(~idcs_false)[0][:idcs_false.sum()]
-            idcs_true = np.zeros_like(idcs_false)
-            idcs_true[idcs_true_crop] = True
-        else:
-            idcs_true = self.detect_array == 1
-            idcs_false_crop =  np.where(~idcs_true)[0][:idcs_true.sum()]
-            idcs_false = np.zeros_like(idcs_true)
-            idcs_false[idcs_false_crop] = True
-
-        idcs_sample = idcs_true | idcs_false
-
-        self.params_db = self.params_db.loc[idcs_sample]
-        self.params_db = self.params_db.reset_index(drop=True)
-
-        self.wave_db = self.wave_db.loc[idcs_sample]
-        self.wave_db = self.wave_db.reset_index(drop=True)
-
-        self.flux_db = self.flux_db.loc[idcs_sample]
-        self.flux_db = self.flux_db.reset_index(drop=True)
-
-        self.detect_array = self.detect_array[idcs_sample]
-
-        # Crop the grid
-        mu_idx = self.params_db['mu_index'].unique()
-        assert mu_idx.size == 1
-        mu_idx = mu_idx[0]
-
-        start_index = int(max(0, mu_idx - box_size // 2))
-        end_index = int(start_index + box_size)
-
-        self.wave_db = self.wave_db.iloc[:, start_index:end_index]
-        self.flux_db = self.flux_db.iloc[:, start_index:end_index]
-
-        # Normalize the data
-        array_1D = self.flux_db.to_numpy()
-        array_1D = feature_scaling(array_1D, transformation='log-min-max', log_base=norm_base)
-        self.flux_db = pd.DataFrame(data=array_1D, columns=self.flux_db.columns)
-
-        # Generate the 2D data
-        if approximation is not None:
-            approximation = np.atleast_1d(approximation)
-            array_2D = np.tile(array_1D[:, None, :], (1, approximation.size, 1))
-            array_2D = array_2D > approximation[::-1, None]
-            array_2D = array_2D.astype(int)
-            array_2D = array_2D.reshape((array_1D.shape[0], 1, -1))
-            array_2D = array_2D.squeeze()
-
-            hdrs = np.full(approximation.size * box_size, 'Pixel')
-            hdrs = np.char.add(hdrs, np.arange(approximation.size * box_size).astype(str))
-            self.image_db = pd.DataFrame(data=array_2D, columns=hdrs)
-
-        # Reshuffle
-        self.shuffle_databases()
-
-        # Save the 1D
-        subfolder = Path(output_folder)/f'_results_{label}'
-        subfolder.mkdir(parents=True, exist_ok=True)
-        self.wave_db.to_csv(f'{subfolder}/sample_wave_{label}.csv', index=False)
-        self.flux_db.to_csv(f'{subfolder}/sample_flux_{label}.csv', index=False)
-        np.savetxt(f'{subfolder}/sample_detection_{label}.csv', self.detect_array, fmt='%i')
-        save_log(self.params_db, f'{subfolder}/database_{label}.csv')
-
-        # Save the 2D array
-        if approximation is not None:
-            self.image_db.to_csv(f'{subfolder}/sample_image_{label}.csv', index=False)
-
-        # Save the plot with the data points
-        self.plot_training_sample(subfolder, label, limit_box)
+            file_address = self.data_folder / f'{self.scale}_{self.sample_prefix}_{self.version}_image.txt'
+            print(f'\nSaving 2D database: {file_address}')
+            self.image_db.to_csv(file_address)
+            print('- saved')
 
         return
 
@@ -444,6 +285,8 @@ class TrainingSampleScaler:
         return y_norm
 
     def shuffle_databases(self, shuffle_seed=42):
+
+        print('\nShuffling data')
 
         idcs_shuffle = np.random.default_rng(seed=shuffle_seed).permutation(np.arange(self.type_array.size))
 
@@ -459,7 +302,7 @@ class TrainingSampleScaler:
             self.image_db = self.image_db.loc[idcs_shuffle]
             self.image_db = self.image_db.reset_index(drop=True)
 
-        print('Shuffling data')
+        print('- complete')
 
         # # Slice the data
         # self.type_array
@@ -467,51 +310,73 @@ class TrainingSampleScaler:
 
         return
 
-    def plot_training_sample(self, output_folder, label, limit_box=None, idcs_plot=None):
+    def plot_training_sample(self, cfg, database_df, output_address):
 
-        # Plot the sample
-        idcs_plot = idcs_plot if idcs_plot is not None else self.params_db.index
-        x_ratios = self.params_db.loc[idcs_plot, 'sigma_lambda_ratio'].to_numpy()
-        y_ratios = self.params_db.loc[idcs_plot, 'amp_noise_ratio'].to_numpy()
-        detect_values = self.detect_array[idcs_plot]
+        # Figure format
+        fig_cfg = theme.fig_defaults({'axes.labelsize': 10,
+                                      'axes.titlesize': 10,
+                                      'figure.figsize': (3, 3),
+                                      'hatch.linewidth': 0.3,
+                                      "legend.fontsize": 8})
 
-        x_detection = np.linspace(self.res_limits[0],  self.res_limits[1], 100)
-        y_detection = detection_function(x_detection)
+        # Creat the figure
+        n_points = 500
+        with rc_context(fig_cfg):
 
-        with rc_context(STANDARD_PLOT):
+            # Loop throught the sample and generate the figures
             fig, ax = plt.subplots()
+            for label_feature, number_feature in cfg['classes'].items():
+                if number_feature > 0:
 
-            ax.axvline(0.3, label='Cosmic ray boundary', linestyle='--', color='purple')
+                    # Filter the DataFrame by the category
+                    idcs_feature = database_df['spectral_number'] == number_feature
 
-            ax.axvline(limit_box, label='Selection limit', linestyle='--', color='orange')
+                    if idcs_feature.sum() > 0:
+                        feature_df = database_df.loc[database_df['spectral_number'] == number_feature].sample(n=n_points)
+                        # feature_df = database_df.iloc[:500, :]
 
-            ax.plot(x_detection, y_detection, color='black', label='Detection boundary')
+                        int_ratio = feature_df.loc[:, 'int_ratio'].to_numpy()
+                        res_ratio = feature_df.loc[:, 'res_ratio'].to_numpy()
+                        color = cfg[label_feature]['color']
 
-            # ax.scatter(x_ratios, y_ratios)
-            ax.scatter(x_ratios[detect_values], y_ratios[detect_values], color='palegreen', label='Positive detection')
-            ax.scatter(x_ratios[~detect_values], y_ratios[~detect_values], color='xkcd:salmon',
-                       label='Negative detection')
+                        ax.scatter(res_ratio, int_ratio, color=color, label=label_feature, alpha=0.5, edgecolor='none')
 
-            # Desi range
-            ax.axvspan(0.10, 3.60, alpha=0.2, color='tab:blue', label='DESI range')
+                        # Narrow component case
+                        if label_feature == 'broad':
+                            feature_df = database_df.loc[database_df['spectral_number'] == number_feature + 0.5].sample(n=n_points)
 
-            # fraction_text = r'$\textcolor{{{}}}{{{}}}\,\textcolor{{{}}}{{{}}}$'.format('palegreen',
-            #                                                                             x_ratios[detect_values].size,
-            #                                                                             'xkcd:salmon',
-            #                                                                             x_ratios[~detect_values].size)
+                            int_ratio = feature_df.loc[:, 'int_ratio'].to_numpy()
+                            res_ratio = feature_df.loc[:, 'res_ratio'].to_numpy()
+                            color = cfg[label_feature]['color']
 
+                            ax.scatter(res_ratio, int_ratio, marker='x', color='black', label='narrow', alpha=1)
 
-            title = f'Grid size = {detect_values.size} points ({(detect_values.sum()/detect_values.size)*100:0.1f} % True)'
+            # Wording
+            ax.update(
+                {'xlabel': r'$\frac{\sigma_{gas}}{\Delta\lambda_{inst}} = \sigma_{pixels}$ (Gaussian sigma in pixels)',
+                 'ylabel': r'$\frac{A_{gas}}{\sigma_{noise}}$ (Signal-to-noise)'})
+            ax.legend(loc='lower center', ncol=2, framealpha=0.95)
 
-            ax.update({'xlabel': r'$\frac{\sigma_{gas}}{\Delta\lambda_{inst}}$',
-                       'ylabel': r'$\frac{A_{gas}}{\sigma_{noise}}$',
-                       'title': title})
-
+            # Axis format
             ax.set_yscale('log')
-            ax.legend(loc='lower right')
+            # ax.set_xlim(0, 10)
+            # ax.set_ylim(0.01, 10000)
+
+            # Upper axis
+            ax2 = ax.twiny()
+            ticks_values = ax.get_xticks()
+            ticks_labels = [f'{tick:.0f}' for tick in ticks_values * 6]
+            ax2.set_xticks(ticks_values)  # Set the tick positions
+            ax2.set_xticklabels(ticks_labels)
+            ax2.set_xlabel(r'$b_{pixels}$ (detection box width in pixels)')
+
+            # Grid
+            ax.grid(axis='x', color='0.95', zorder=1)
+            ax.grid(axis='y', color='0.95', zorder=1)
 
             plt.tight_layout()
             # plt.show()
-            plt.savefig(output_folder/f'{label}_training_sample.png')
+            plt.savefig(output_address)
+
 
         return

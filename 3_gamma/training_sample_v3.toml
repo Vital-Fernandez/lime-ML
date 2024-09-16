@@ -71,8 +71,6 @@ peak.'min_res_addition' = 1
 peak.'max_res_addition' = 1
 doublet.'min_int_ratio' = 1000
 
-
-
 # Line configuration
 mu_line = 0
 headers =['amp', 'sigma',
@@ -95,57 +93,23 @@ conversion_array_min_max = [0.0, 0.03125, 0.0625 , 0.09375, 0.125  , 0.15625, 0.
                             0.875  , 0.90625, 0.9375 , 0.96875, 1.0]
 
 
-
 # Tree configuration
 train_faction = 0.9
-RandomForestClassifier.'n_estimators' = 100
-RandomForestClassifier.'max_leaf_nodes' = 6
+RandomForestClassifier.'n_estimators' = 300
 RandomForestClassifier.'n_jobs' = -1
-RandomForestClassifier.'max_depth' = 10
+RandomForestClassifier.'max_depth' = 15
 RandomForestClassifier.'min_samples_leaf' = 10000
-RandomForestClassifier.'min_samples_split' = 10000
-RandomForestClassifier.'max_features' = 12
+RandomForestClassifier.'min_samples_split' = 5000
+RandomForestClassifier.'class_weight' = "balanced"
 
-## Data location
-#
-## Parameter ranges
-#amp_array = [0.1,0.25,0.75,1,2,3,4,5,10,100,1000]
-#sigma_gas_um_array = [0.0001, 0.0003, 0.0006, 0.001, 0.003, 0.006, 0.01, 0.03, 0.06, 0.01, 0.03]
-#delta_lambda_um_array = [0.00018,0.0005,0.00075,0.001,0.0014,0.0018,0.0022,0.0026,0.003,0.0033,0.0036]
-#noise_array = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 1.5, 2, 2.5, 4]
-#
-## Box parameters
-#box_limits = [20, 20]
-#small_box_reslimit = 1.625
-#large_box_reslimit = 4.125
-#small_box_size = 13
-#large_box_size = 33
-#
-## Sample parameters
-#int_sample_size = 5000
-#res_sample_size = 500
-#int_sample_limits = [0, 1]
-#res_sample_limits = [0.10, 3.60]
-#resolution_fix = 1
-#
-## Line parameters
-#line = 'H1_4861A'
-#data_points = 400
-#width_factor = 4
-#
-## Database
-#headers =['amp', 'sigma',
-#          'noise', 'delta',
-#          'amp_noise_ratio', 'sigma_lambda_ratio',
-#          'intg_flux', 'intg_flux_err',
-#          'profile_flux', 'profile_flux_err',
-#          'flux_true', 'true_err',
-#          'cont', 'cont_err',
-#          'm_cont', 'n_cont',
-#          'line_pixels', 'box_pixels',
-#          'detection', 'success_fitting',
-#          'mu_index']
-
+[colors]
+undefined = 'black'
+white-noise = '#C41E3A'     # Red
+emission = '#00FF98'        # Spring Green
+cosmic-ray= '#FFF468'       # Yellow
+pixel-line = '#FF7C0A'      # Orange
+broad = '#A330C9'           # Dark magenta
+peak = '#C69B6D'            # Tan
 
 [disp_wavelength_ranges]
 example_dispensers = ['MIKE_BLUE', 'MIKE_RED', 'XSHOOTER_UVB',

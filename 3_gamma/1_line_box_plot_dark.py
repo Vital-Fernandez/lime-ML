@@ -1,8 +1,9 @@
 import lime
 import numpy as np
 from lime.plots import theme
-from matplotlib import rc_context, pyplot as plt, rc
+from matplotlib import rc_context, pyplot as plt, rc, cm, colors
 from lime.model import gaussian_model, gaussian_area, FWHM_FUNCTIONS
+from pathlib import Path
 
 def FWHM_conv(sigma_km):
 
@@ -63,12 +64,22 @@ text_sigma_ranges = ['HII galaxies\n' + r'$\left(L(H\beta) \propto \sigma_{H\bet
 #     R_range = R_formula(k_line, b_range, sigma, c_KMpS)
 #     ranges_dict[sigma] = [np.array(b_range), np.array(R_range)]
 
+cmap = cm.get_cmap('Oranges')
+norm = colors.Normalize(vmin=0, vmax=3)
+
+output_folder=Path('/home/vital/Dropbox/Astrophysics/Seminars/BootCamp2025')
+theme.set_style('dark')
+theme.colors['fg']
 lines_dict = {}
 for i, sigma in enumerate(sigma_lines):
     R_range = R_formula(k_line, b_range, sigma, c_KMpS)
     lines_dict[sigma] = [np.array(b_range), np.array(R_range)]
 
-with rc_context(theme.fig_defaults()):
+fig_default = theme.fig_defaults()
+fig_default['figure.figsize'] = (8, 4)
+fig_default['figure.dpi'] = 2000
+
+with rc_context(fig_default):
 
     fig, ax1 = plt.subplots()
 
@@ -88,7 +99,7 @@ with rc_context(theme.fig_defaults()):
         sigma, values = items
         b_range, R_range = values
 
-        ax1.plot(R_range, b_range, color='black', linewidth=0.5, linestyle='--')
+        ax1.plot(R_range, b_range, color=theme.colors['fg'], linewidth=0.5, linestyle='--')
 
         # Coordiantes text:
         R_text = R_formula(k_line, b_coord, sigma, c_KMpS)
@@ -100,7 +111,7 @@ with rc_context(theme.fig_defaults()):
         FWHM = FWHM_conv(sigma)
         text = f'$\sigma = {sigma}\,km/s, FWHM = {FWHM:.0f}\,km/s$'
         ax1.text(R_text-500, b_coord, text, fontsize=font_sigmas, rotation=angle_data, rotation_mode='anchor',
-                 transform_rotates_text=True, color='black', weight='bold')
+                 transform_rotates_text=True, color=theme.colors['fg'], weight='bold')
 
     # y_lims
     # y_lims = ax1.get_ylim()
@@ -116,11 +127,11 @@ with rc_context(theme.fig_defaults()):
 
     # Phenomena arrows
     ax1.annotate('', xy=(2400, 1.02), xytext=(8500,  1.02), xycoords=('data', 'axes fraction'),
-                 arrowprops=dict(arrowstyle='<->', color='black', lw=1))
+                 arrowprops=dict(arrowstyle='<->', color=theme.colors['fg'], lw=1))
     ax1.annotate('', xy=(7600, 1.02), xytext=(34800,  1.02), xycoords=('data', 'axes fraction'),
-                 arrowprops=dict(arrowstyle='<->', color='black', lw=1))
+                 arrowprops=dict(arrowstyle='<->', color=theme.colors['fg'], lw=1))
     ax1.annotate('', xy=(33900, 1.02), xytext=(80500,  1.02), xycoords=('data', 'axes fraction'),
-                 arrowprops=dict(arrowstyle='<->', color='black', lw=1))
+                 arrowprops=dict(arrowstyle='<->', color=theme.colors['fg'], lw=1))
 
     ax1.annotate(text_sigma_ranges[0], xy=(57200, 1.04), xytext=(52000,  1.04), xycoords=('data', 'axes fraction'),
                  fontsize=7)
@@ -155,7 +166,7 @@ with rc_context(theme.fig_defaults()):
     # loc = 'left', labelpad = 10)
     #
     ax1.set_ylabel(r'$b_{pixels}$ (detection box width in pixels)')
-    ax2.set_ylabel('$\sigma_{line, pixels}$ (Gaussian sigma in pixels)')
+    ax2.set_ylabel('$\sigma_{pixels}$ (Gaussian sigma in pixels)')
 
     # Formula
     formula = r'$b_{pixels} =  n_{\sigma} \cdot \sigma_{pixels} = n_{\sigma} \, \frac{\sigma_{line}}{c} R$'
@@ -166,21 +177,22 @@ with rc_context(theme.fig_defaults()):
     axin_ticks_labels = [r'{}$\sigma$'.format(tick) for tick in range_sigma_pixels]
     axin_ticks_labels[4] = '0'
     axins = ax1.inset_axes([0.65, 0.08, 0.30, 0.50], xticklabels=axin_ticks_labels, yticklabels=[], transform=ax1.transAxes)
-    for amp in amp_tiers:
+    for idx_amp, amp in enumerate(amp_tiers):
         y_gauss = gaussian_model(x_gauss, amp, 0, sigma_shape) + cont + noise_gauss
-        axins.step(x_gauss, y_gauss, where='mid')
+        axins.step(x_gauss, y_gauss, where='mid', color=cmap(norm(idx_amp)))
+    axins.axhline(cont, color=theme.colors['fg'], linestyle='--')
+
         # text_curve = r'$\frac{A}{\sigma_{noise}}=$' + r'${}$'.format(amp)
         # axins.text(0, (amp + cont) * 1.30, text_curve, fontsize=4, horizontalalignment='center')
-        axins.axhline(cont, color='black', linestyle='--')
 
     # Pointing arrow
-    axins.annotate('', xy=(-3.25, 7000), xytext=(3.25, 7000), arrowprops=dict(arrowstyle='<->', color='black', lw=1))
-    axins.text((-3.25 + 3.25) / 2, 7000-1200, r'$n_{\sigma} = 6$', ha='center', va='bottom', fontsize=5, color='black',
-               bbox=dict(facecolor='white', alpha=1, edgecolor='white', boxstyle='round,pad=0.01'))
+    axins.annotate('', xy=(-3.25, 7000), xytext=(3.25, 7000), arrowprops=dict(arrowstyle='<->', color=theme.colors['fg'], lw=1))
+    axins.text((-3.25 + 3.25) / 2, 7000-1200, r'$n_{\sigma} = 6$', ha='center', va='bottom', fontsize=5, color=theme.colors['fg'],
+               bbox=dict(facecolor=theme.colors['bg'], alpha=1, edgecolor='none', boxstyle='round,pad=0.01'))
     axins.set_yscale('log')
     axins.set_xticks(range_sigma_pixels)
     axins.set_xticklabels(axin_ticks_labels)
-    axins.grid(axis='x', color='0.95')
+    axins.grid(axis='x', color=theme.colors['fg'], linewidth=0.1)
     axins.set_ylim(bottom=0, top=10000)
     axins.tick_params(axis='y', labelsize=5)
     axins.tick_params(axis='x', labelsize=5)
@@ -190,11 +202,12 @@ with rc_context(theme.fig_defaults()):
 
     # axins.set_yticklabels(axins.get_yticks(), fontsize=5)
 
-    ax1.grid(axis='x', color='0.95')
-    ax1.grid(axis='y', color='0.95')
+    ax1.grid(axis='x', color=theme.colors['fg'], linewidth=0.25)
+    ax1.grid(axis='y', color=theme.colors['fg'], linewidth=0.25)
     # ax1.legend()
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig(output_folder/'box_selector.png')
 
 
 # delta_lamb = deltaLamb_formula(k_line, b_range, sigma)
