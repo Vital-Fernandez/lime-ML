@@ -17,11 +17,18 @@ int-ratio_max = 10000
 
 # Intensity ratio (line amplitude / sigma noise) parameters
 int-ratio_log_base = 10000
-int-ratio_points = 5000
+int-ratio_points = 6000
 
 # Resolution ratio (line sigma / instrument resolution) parameters
 res-ratio_points = 500
 instr_res = 1
+
+# Imagization parameters
+conversion_array_min_max = [0.0, 0.03125, 0.0625 , 0.09375, 0.125  , 0.15625, 0.1875 ,
+                            0.21875, 0.25   , 0.28125, 0.3125 , 0.34375, 0.375  , 0.40625,
+                            0.4375 , 0.46875, 0.5    , 0.53125, 0.5625 , 0.59375, 0.625  ,
+                            0.65625, 0.6875 , 0.71875, 0.75   , 0.78125, 0.8125 , 0.84375,
+                            0.875  , 0.90625, 0.9375 , 0.96875, 1.0]
 
 # Continuum configuration
 noise_loc = 0
@@ -29,47 +36,6 @@ noise_min = 0.5
 noise_max = 10.0
 uncrop_array_size = 400
 cont_level = 0
-
-# Classes list:
-classes.'undefined' = 0
-classes.'white-noise' = 1
-classes.'emission' = 2
-classes.'cosmic-ray' = 3
-classes.'pixel-line' = 4
-classes.'broad' = 5
-classes.'doublet' = 6
-classes.'peak' = 7
-
-
-# Categories parameters
-undefined.'color' = 'black'
-
-white-noise.'color' = '#C41E3A' # Red
-
-emission.'color' = '#00FF98' # Spring Green
-
-cosmic-ray.'color' = '#FFF468' # Yellow
-cosmic-ray.'cosmic-ray_boundary' = 100
-
-pixel-line.'color' = '#FF7C0A' # Orange
-
-broad.'color' = '#A330C9' # Dark magenta
-broad.'min_detection_factor' = 2
-broad.'narrow_broad_min_factor' = 2
-broad.'narrow_broad_max_factor' = 0.5
-broad.'broad_int_max_factor' = 0.5
-
-doublet.'color' = '#3FC7EB' # Light blue
-doublet.'min_res_ratio' = 1.2
-doublet.'max_res_ratio' = 1.6
-doublet.'min_detection_factor' = 10
-doublet.'res-ratio_difference_factor' = [0.8, 1.2]
-doublet.'int-ratio_difference_factor' = [0.3, 3]
-
-peak.'color' = '#C69B6D' # Tan
-peak.'min_res_addition' = 1
-peak.'max_res_addition' = 1
-doublet.'min_int_ratio' = 1000
 
 # Line configuration
 mu_line = 0
@@ -85,22 +51,201 @@ headers =['amp', 'sigma',
           'detection', 'success_fitting',
           'mu_index']
 
-# Imagization parameters
-conversion_array_min_max = [0.0, 0.03125, 0.0625 , 0.09375, 0.125  , 0.15625, 0.1875 ,
-                            0.21875, 0.25   , 0.28125, 0.3125 , 0.34375, 0.375  , 0.40625,
-                            0.4375 , 0.46875, 0.5    , 0.53125, 0.5625 , 0.59375, 0.625  ,
-                            0.65625, 0.6875 , 0.71875, 0.75   , 0.78125, 0.8125 , 0.84375,
-                            0.875  , 0.90625, 0.9375 , 0.96875, 1.0]
+# Classes list:
+classes.'undefined' = 0
+classes.'white-noise' = 1
+classes.'emission' = 2
+classes.'cosmic-ray' = 3
+classes.'pixel-line' = 4
+classes.'broad' = 5
+classes.'doublet' = 6
+#classes.'peak' = 7
+
+broad.'min_detection_factor' = 2
+broad.'narrow_broad_min_factor' = 2
+broad.'narrow_broad_max_factor' = 0.5
+broad.'broad_int_max_factor' = 0.5
+
+cosmic-ray.'cosmic-ray_boundary' = 100
+
+doublet.'min_res_ratio' = 1.2
+doublet.'max_res_ratio' = 1.6
+doublet.'min_detection_factor' = 10
+doublet.'res-ratio_difference_factor' = [0.8, 1.2]
+doublet.'int-ratio_difference_factor' = [0.3, 3]
+doublet.'min_int_ratio' = 1000
+
+peak.'min_res_addition' = 1
+peak.'max_res_addition' = 1
+
+[2categories_v2]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 100000
+test_sample_size_fraction = 0.1
+
+replace_labels.'emission' = ['cosmic-ray', 'pixel-line']
+categories = ['white-noise', 'emission']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 1
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[6categories_v2_80000points]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 80000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'emission', 'cosmic-ray', 'pixel-line', 'doublet', 'broad']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 1
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[5categories_v2_80000points]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 80000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'emission', 'cosmic-ray', 'pixel-line', 'doublet']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 1
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[3categories_v2]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 100000
+test_sample_size_fraction = 0.1
+
+replace_labels.'cosmic-ray' = ['pixel-line']
+categories = ['white-noise', 'emission', 'cosmic-ray']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 1
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[4categories_v2]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 80000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'emission', 'cosmic-ray', 'pixel-line']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 1
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
 
 
-# Tree configuration
-train_faction = 0.9
-RandomForestClassifier.'n_estimators' = 300
-RandomForestClassifier.'n_jobs' = -1
-RandomForestClassifier.'max_depth' = 15
-RandomForestClassifier.'min_samples_leaf' = 10000
-RandomForestClassifier.'min_samples_split' = 5000
-RandomForestClassifier.'class_weight' = "balanced"
+[4_categories_v1_search_80000points_min_samples_1-5-10-15percent_mult_12_features]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 80000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'emission', 'cosmic-ray', 'pixel-line']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+param_distributions."n_estimators" = [20, 40, 60]#, 15, 20, 40, 60]
+param_distributions."max_depth" = [4, 6, 8]#, 12, 15, 20, 25]
+param_distributions.'max_features' = [12]
+param_distributions."min_samples_split" = [80, 400, 800, 4000, 8000, 12000]#,  3800,  7600, 11400]
+param_distributions."min_samples_leaf" = [80, 400, 800, 4000, 8000, 12000]#,  3800,  7600, 11400, 15200]
+
+estimator_params."n_jobs" = 20
+estimator_params."verbose" = 1
+
+[4_categories_v1_70000points]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 76000
+test_sample_size_fraction = 0.1
+
+#replace_labels.'cosmic-ray' = ['pixel-line']
+categories = ['white-noise', 'emission', 'cosmic-ray', 'pixel-line']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."n_jobs" = 15
+estimator_params."verbose" = 3
+
+[3_categories_v1_100000points]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 100000
+test_sample_size_fraction = 0.1
+
+replace_labels.'cosmic-ray' = ['pixel-line']
+categories = ['white-noise', 'emission', 'cosmic-ray']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."n_jobs" = 15
+estimator_params."verbose" = 3
+
+
+[2_categories_v1_12000points]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 12000
+test_sample_size_fraction = 0.1
+
+replace_labels.'emission' = ['cosmic-ray', 'pixel-line']
+categories = ['white-noise', 'emission']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."n_jobs" = 15
+estimator_params."verbose" = 3
 
 [colors]
 undefined = 'black'
@@ -109,7 +254,35 @@ emission = '#00FF98'        # Spring Green
 cosmic-ray= '#FFF468'       # Yellow
 pixel-line = '#FF7C0A'      # Orange
 broad = '#A330C9'           # Dark magenta
+doublet = '#3FC7EB'         # Light blue
 peak = '#C69B6D'            # Tan
+
+
+[param_search_first]
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+#estimator_params."scoring" = "f1_weighted"
+
+param_distributions."n_estimators" = [1, 100]
+param_distributions."max_depth" = [1, 10]
+
+search_params."random_state" = 42
+search_params."n_jobs" = 20
+search_params."verbose" = 4
+search_params."n_iter" = 20
+search_params."cv" = 3
+#search_params."scoring" = 'f1'
+
+[training_algorithms]
+train_faction = 0.9
+RandomForestClassifier_first.'n_estimators' = 300
+RandomForestClassifier_first.'n_jobs' = -1
+RandomForestClassifier_first.'max_depth' = 15
+RandomForestClassifier_first.'min_samples_leaf' = 1000
+RandomForestClassifier_first.'min_samples_split' = 500
+RandomForestClassifier_first.'class_weight' = "balanced"
+RandomForestClassifier_first.'verbose' = 1
 
 [disp_wavelength_ranges]
 example_dispensers = ['MIKE_BLUE', 'MIKE_RED', 'XSHOOTER_UVB',

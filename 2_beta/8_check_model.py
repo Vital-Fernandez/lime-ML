@@ -25,4 +25,3 @@ label = 'small_box_min_max'
 
 analysis_check(cfg, version, label, output_folder)
 
-lime.Spectrum

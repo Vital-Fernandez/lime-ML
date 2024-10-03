@@ -1,17 +1,24 @@
 import numpy as np
 import pandas as pd
 import joblib
-from lime import load_frame, save_frame, load_cfg
+import importlib
+import toml
+
+from lime import load_cfg
 from lime import detection_function
 from lime.plots import theme
 from matplotlib import pyplot as plt, rc_context
 from pathlib import Path
+from scipy.stats import randint
+from sklearn.model_selection import RandomizedSearchCV
+
 
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_score, recall_score
+# from sklearn.metrics import precision_score, recall_score
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import StratifiedShuffleSplit
 
 
 STANDARD_PLOT = theme.fig_defaults()
@@ -20,9 +27,70 @@ STANDARD_PLOT['figure.figsize'] = (11, 11)
 
 c_kmpers = 299792.458  # Km/s
 
-
 # Training algorithms
 algorithm_dict = {'RandomForestClassifier': RandomForestClassifier}
+
+
+def read_sample_database(db_address, model_cfg):
+
+    # Load the training sample
+    print(f'\nLoading database: {db_address}')
+    db_df = pd.read_csv(db_address)
+    print(f'- complete')
+
+    # Reassign the labels if requested
+    if 'replace_labels' in model_cfg:
+        print(f'\nReplacing bands:')
+        for new_label, old_labels in model_cfg['replace_labels'].items():
+            for old_label in old_labels:
+                print(f'- {old_label} => {new_label}')
+                db_df.loc[db_df['shape_class'] == old_label, 'shape_class'] = new_label
+
+    return db_df
+
+
+def stratified_train_test_split(df, categories, num_samples, test_size=0.2, random_state=42):
+
+    train_data = []
+    test_data = []
+
+    print(f'\nStratifying sample categories ({categories}):')
+
+    # Loop over each category to ensure equal samples from each
+    for category in categories:
+
+        # Filter the dataframe for the current category
+        idcs_shape = df['shape_class'] == category
+        X = df.loc[idcs_shape, 'int_ratio':]  # Features (all columns except the first)
+        y = df.loc[idcs_shape, 'shape_class']
+
+        # Ensure there are enough samples in the category
+        num_category = y.size
+        if num_category < num_samples:
+            print(f"- '{category}': {num_category} below that the requested {num_samples}")
+        else:
+            print(f"- '{category}': {num_category}.")
+
+        sss = StratifiedShuffleSplit(n_splits=1, train_size=int(num_samples * (1 - test_size)),
+                                     test_size=int(num_samples * test_size), random_state=random_state)
+
+        for train_index, test_index in sss.split(X, y):
+            X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        # Reconstruct the train and test DataFrames for the current category
+        df_train = pd.concat([y_train.reset_index(drop=True), X_train.reset_index(drop=True)], axis=1)
+        df_test = pd.concat([y_test.reset_index(drop=True), X_test.reset_index(drop=True)], axis=1)
+
+        # Append the results to the overall train and test lists
+        train_data.append(df_train)
+        test_data.append(df_test)
+
+    # Concatenate all category DataFrames to get the final train and test sets
+    final_train_df = pd.concat(train_data).reset_index(drop=True)
+    final_test_df = pd.concat(test_data).reset_index(drop=True)
+
+    return final_train_df, final_test_df
 
 
 def feature_scaling(data, transformation='min-max', log_base=None, axis=1):
@@ -189,6 +257,66 @@ def normalization_1d(y, log_base):
 
     return y_norm
 
+def prepare_search_algorithm(model_cfg, label_cfg):
+
+    fitting_cfg = model_cfg[label_cfg]
+
+    # Recover predictor algorithm from sklearn
+    estimator = getattr(importlib.import_module(fitting_cfg['estimator']["module"]), fitting_cfg['estimator']["class"])
+    estimator_params = fitting_cfg['estimator_params']
+
+    # Get the parameters range for the search
+    param_distributions = {}
+    for key, value_limits in fitting_cfg['param_distributions'].items():
+        param_distributions[key] = randint(*value_limits)
+
+    # Recorver the common paramters for the fittings
+    search_params = fitting_cfg['search_params']
+
+    # Define the search
+    search = RandomizedSearchCV(estimator=estimator(**estimator_params), param_distributions=param_distributions,
+                                **search_params)
+
+    return search
+
+def save_search_results(search_algorithm, model_cfg, label_cfg, x_test, y_test, output_root):
+
+    # Read local configuration
+    fitting_cfg = model_cfg[label_cfg]
+
+    # Evaluate models
+    best_params = search_algorithm.best_params_
+    test_score = search_algorithm.score(x_test, y_test)
+    cv_results = search_algorithm.cv_results_
+
+    print('\nBest params', best_params)
+    print('\ntest_score', test_score)
+    print('\ncv_results', cv_results)
+
+    # Save results to a file:
+    txt_path = f'{output_root}_summary.txt'
+    df = pd.DataFrame(cv_results)
+    df.drop(['params'], axis=1, inplace=True)
+    with open(txt_path, 'wb') as output_file:
+        pd.set_option('multi_sparse', False)
+        string_DF = df.to_string()
+        output_file.write(string_DF.encode('UTF-8'))
+
+    # Save results into a TOML file
+    toml_path = f'{output_root}_summary.toml'
+    with open(toml_path, 'w') as f:
+        toml.dump({'inputs': fitting_cfg, 'outputs': {'Best params': best_params, 'test_score': test_score}}, f)
+
+    # Save best model
+    best_model_path = f'{output_root}_best_model.joblib'
+    joblib.dump(search_algorithm.best_estimator_, best_model_path)
+
+    # Save search
+    search_path = f'{output_root}_search.joblib'
+    joblib.dump(search_algorithm, search_path)
+
+    return
+
 
 class TrainingSampleScaler:
 
@@ -202,6 +330,7 @@ class TrainingSampleScaler:
         self.data_folder = Path(sample_params['data_labels']['output_folder'])/self.version
 
         self.cfg = sample_params[f'training_data_{self.version}']
+        self.color_dict = sample_params[f'colors']
 
         # Config
         self.res_limits = [self.cfg["res-ratio_min"], self.cfg["box_pixels"]/self.cfg["n_sigma"]]
@@ -213,14 +342,14 @@ class TrainingSampleScaler:
         print('- complete')
 
         # Slice the data
-        self.type_array = self.sample_db["spectral_number"].to_numpy(int)
+        self.type_array = self.sample_db["shape_class"]
         self.int_ratio, self.res_ratio = self.sample_db['int_ratio'].to_numpy(), self.sample_db['res_ratio'].to_numpy()
 
         # Container for the image version
         self.image_db = None
 
         # Shuffle the data
-        self.shuffle_databases()
+        # self.shuffle_databases()
 
         assert self.sample_db.iloc[:, 3:].columns.size == self.cfg["box_pixels"], (f'The configuration pixel number '
                                                                                    f'(self.cfg["box_pixels"]) is different '
@@ -257,22 +386,22 @@ class TrainingSampleScaler:
         # self.shuffle_databases()
 
         # Make plot to review the training sample
-        plot_address = self.data_folder / f'{self.scale}_{self.sample_prefix}_{self.version}_diagnostic_plot.png'
+        plot_address = self.data_folder / f'{self.sample_prefix}_{self.version}_{self.scale}_diagnostic_plot.png'
         print(f'\nMaking review plot: {plot_address}')
-        self.plot_training_sample(self.cfg, self.sample_db, plot_address)
+        self.plot_training_sample(self.cfg, self.sample_db, plot_address, color_dict=self.color_dict)
         print(f'- complete')
 
         # Save the 1D
-        database_address = self.data_folder/f'{self.scale}_{self.sample_prefix}_{self.version}.txt'
+        database_address = self.data_folder/f'{self.sample_prefix}_{self.version}_{self.scale}.csv'
         print(f'\nSaving 1D database: {database_address}')
-        self.sample_db.to_csv(database_address)
+        self.sample_db.to_csv(database_address, index=False)
         print(f'- complete')
 
         # Save the 2D array
         if self.image_db is not None:
-            file_address = self.data_folder / f'{self.scale}_{self.sample_prefix}_{self.version}_image.txt'
+            file_address = self.data_folder / f'{self.sample_prefix}_{self.version}_image_{self.scale}.csv'
             print(f'\nSaving 2D database: {file_address}')
-            self.image_db.to_csv(file_address)
+            self.image_db.to_csv(file_address, index=False)
             print('- saved')
 
         return
@@ -310,7 +439,7 @@ class TrainingSampleScaler:
 
         return
 
-    def plot_training_sample(self, cfg, database_df, output_address):
+    def plot_training_sample(self, cfg, database_df, output_address, color_dict=None):
 
         # Figure format
         fig_cfg = theme.fig_defaults({'axes.labelsize': 10,
@@ -329,25 +458,25 @@ class TrainingSampleScaler:
                 if number_feature > 0:
 
                     # Filter the DataFrame by the category
-                    idcs_feature = database_df['spectral_number'] == number_feature
+                    idcs_feature = database_df['shape_class'] == label_feature
 
                     if idcs_feature.sum() > 0:
-                        feature_df = database_df.loc[database_df['spectral_number'] == number_feature].sample(n=n_points)
+                        feature_df = database_df.loc[database_df['shape_class'] == label_feature].sample(n=n_points)
                         # feature_df = database_df.iloc[:500, :]
 
                         int_ratio = feature_df.loc[:, 'int_ratio'].to_numpy()
                         res_ratio = feature_df.loc[:, 'res_ratio'].to_numpy()
-                        color = cfg[label_feature]['color']
+                        color = color_dict[label_feature]
 
                         ax.scatter(res_ratio, int_ratio, color=color, label=label_feature, alpha=0.5, edgecolor='none')
 
                         # Narrow component case
                         if label_feature == 'broad':
-                            feature_df = database_df.loc[database_df['spectral_number'] == number_feature + 0.5].sample(n=n_points)
+                            feature_df = database_df.loc[database_df['shape_class'] == 'narrow'].sample(n=n_points)
 
                             int_ratio = feature_df.loc[:, 'int_ratio'].to_numpy()
                             res_ratio = feature_df.loc[:, 'res_ratio'].to_numpy()
-                            color = cfg[label_feature]['color']
+                            color = color_dict["broad"]
 
                             ax.scatter(res_ratio, int_ratio, marker='x', color='black', label='narrow', alpha=1)
 

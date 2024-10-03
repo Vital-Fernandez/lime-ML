@@ -30,7 +30,7 @@ y_pixel_lines = cosmic_ray_function(x_pixel_lines)
 idcs_crop = y_pixel_lines > 5
 
 theme.set_style('dark')
-fig_cfg = theme.fig_defaults({'figure.dpi': 1200,
+fig_cfg = theme.fig_defaults({'figure.dpi': 150,
                               'axes.labelsize': 9,
                               'axes.titlesize':9,
                               'figure.figsize': (4, 4),
@@ -133,6 +133,6 @@ with rc_context(fig_cfg):
     ax.grid(axis='y', color='0.95', zorder=1)
 
     plt.tight_layout()
-    # plt.show()
+    plt.show()
     # plt.savefig(plot_address)
-    plt.savefig(output_folder/'diagnostic_plot.svg')
+    # plt.savefig(output_folder/'diagnostic_plot.svg')

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 import lime
 from lime.model import gaussian_model
 from lime.recognition import detection_function, cosmic_ray_function, broad_component_function
@@ -31,7 +32,7 @@ sigma_pixels = box_pixels/n_sigma
 res_ratio_min = cfg['res-ratio_min']
 int_ratio_min, int_ratio_max, int_ratio_base = cfg['int-ratio_min'], cfg['int-ratio_max'], cfg['int-ratio_log_base']
 cr_boundary = cfg['cosmic-ray']['cosmic-ray_boundary']
-inverted_classes = {value: key for key, value in cfg['classes'].items()}
+# inverted_classes = {value: key for key, value in cfg['classes'].items()}
 
 instr_res = cfg['instr_res']
 cont_level = cfg['cont_level']
@@ -43,6 +44,10 @@ int_ratio_max_log = np.log(int_ratio_max) / np.log(int_ratio_base)
 int_ratio_range = np.logspace(int_ratio_min_log, int_ratio_max_log, cfg['int-ratio_points'], base=int_ratio_max)
 res_ratio_range = np.linspace(res_ratio_min, sigma_pixels, cfg['res-ratio_points'])
 combinations = np.array(list(product(int_ratio_range, res_ratio_range)))
+print(f'Int_ratio size: {cfg["int-ratio_points"]}')
+print(f'Res_ratio size: {cfg["res-ratio_points"]}')
+print(f'combinations : {combinations.size}')
+
 
 doublet_min_res, doublet_max_res =  cfg['doublet']['min_res_ratio'], cfg['doublet']['max_res_ratio']
 doublet_min_detection_factor = cfg['doublet']['min_detection_factor']
@@ -78,13 +83,12 @@ idx_0, idx_f = int(idx_zero - box_pixels/2), int(idx_zero + box_pixels/2)
 # Containers for the data
 flux_containers, coords_containers = {}, {}
 for feature_label, feature_number in cfg['classes'].items():
-    flux_containers[feature_number] = np.full([sample_size, box_pixels], np.nan)
-    coords_containers[feature_number] = np.full([sample_size, 2], np.nan)
+    flux_containers[feature_label] = np.full([sample_size, box_pixels], np.nan)
+    coords_containers[feature_label] = np.full([sample_size, 2], np.nan)
 
 # Extra container for the narrow component of the broad feature
-coords_containers[cfg['classes']['broad']+0.5] = np.full([sample_size, 2], np.nan)
-flux_containers[cfg['classes']['broad']+0.5] = np.full([sample_size, box_pixels], np.nan)
-
+coords_containers['narrow'] = np.full([sample_size, 2], np.nan)
+flux_containers['narrow'] = np.full([sample_size, box_pixels], np.nan)
 
 # Loop through the conditions
 bar = tqdm(combinations, desc="Item", mininterval=0.2, unit=" combinations")
@@ -115,27 +119,27 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
 
         # Line
         if res_ratio > cosmic_ray_res:
-            number_id = cfg['classes']['emission']
+            shape_class = 'emission'
 
         # Single pixel
         else:
             if int_ratio > cr_boundary: # Cosmic ray
-                number_id = cfg['classes']['cosmic-ray']
+                shape_class = 'cosmic-ray'
             else: # Pixel line
-                number_id = cfg['classes']['pixel-line']
+                shape_class = 'pixel-line'
 
         # Store the data
-        flux_containers[number_id][idx, :] = flux_arr[idx_0:idx_f]
-        coords_containers[number_id][idx, :] = int_ratio, res_ratio
+        flux_containers[shape_class][idx, :] = flux_arr[idx_0:idx_f]
+        coords_containers[shape_class][idx, :] = int_ratio, res_ratio
 
     # Continuum cases
     else:
         flux_arr = gaussian_model(wave_arr, amp, mu_line, sigma) + white_noise_arr + cont_arr
-        number_id = cfg['classes']['white-noise']
+        shape_class = 'white-noise'
 
         # Store the data
-        flux_containers[number_id][idx, :] = flux_arr[idx_0:idx_f]
-        coords_containers[number_id][idx, :] = int_ratio, res_ratio
+        flux_containers[shape_class][idx, :] = flux_arr[idx_0:idx_f]
+        coords_containers[shape_class][idx, :] = int_ratio, res_ratio
 
 
     # Doublet
@@ -153,8 +157,8 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
         flux_arr = gauss1 + gauss2 + white_noise_arr + cont_arr
 
         # Store the data
-        flux_containers[cfg['classes']['doublet']][idx, :] = flux_arr[idx_0:idx_f]
-        coords_containers[cfg['classes']['doublet']][idx, :] = int_ratio, res_ratio
+        flux_containers['doublet'][idx, :] = flux_arr[idx_0:idx_f]
+        coords_containers['doublet'][idx, :] = int_ratio, res_ratio
 
     # Broad line
     if ((res_ratio > cosmic_ray_res) and (int_ratio >= (broad_int_min_factor * detection_value)) and
@@ -169,38 +173,41 @@ for idx, (int_ratio, res_ratio) in enumerate(bar):
         flux_arr = gaussB + gaussN + white_noise_arr + cont_arr
 
         # Store the data
-        flux_containers[cfg['classes']['broad']][idx, :] = flux_arr[idx_0:idx_f]
-        coords_containers[cfg['classes']['broad']][idx, :] = int_ratio, res_ratio
+        flux_containers['broad'][idx, :] = flux_arr[idx_0:idx_f]
+        coords_containers['broad'][idx, :] = int_ratio, res_ratio
 
-        flux_containers[cfg['classes']['broad'] + 0.5][idx, :] = flux_arr[idx_0:idx_f]
-        coords_containers[cfg['classes']['broad'] + 0.5][idx, :] = narrow_int_arr[idx], narrow_res_arr[idx]
+        flux_containers['narrow'][idx, :] = flux_arr[idx_0:idx_f]
+        coords_containers['narrow'][idx, :] = narrow_int_arr[idx], narrow_res_arr[idx]
 
 
+print(f'Joining the files')
 list_ids, list_fluxes, list_coords = [], [], []
-for number_id, flux_arr in flux_containers.items():
-    if number_id > 0 and number_id != 5.5:
+for feature_label, id_number in cfg['classes'].items():
+    if feature_label in flux_containers:
 
+        flux_arr = flux_containers[feature_label]
         idcs_valid = ~np.isnan(flux_arr.sum(axis=1))
-        feature_type = inverted_classes[number_id]
 
         list_fluxes.append(flux_arr[idcs_valid, :])
-        list_coords.append(coords_containers[number_id][idcs_valid, :])
-        list_ids.append(np.full(flux_arr[idcs_valid, :].shape[0], number_id))
+        list_coords.append(coords_containers[feature_label][idcs_valid, :])
+        list_ids.append(np.full(flux_arr[idcs_valid, :].shape[0], feature_label))
 
         # Store the coordinates from the narrow element of the broad class
-        if number_id == cfg['classes']['broad']:
-            extra_number_id = cfg['classes']['broad'] + 0.5
+        if feature_label == 'broad':
+            extra_number_id = id_number + 0.5
+            list_fluxes.append(flux_containers['narrow'][idcs_valid, :])
+            list_coords.append(coords_containers['narrow'][idcs_valid, :])
+            list_ids.append(np.full(flux_arr[idcs_valid, :].shape[0], 'narrow'))
 
-            list_fluxes.append(flux_containers[extra_number_id][idcs_valid, :])
-            list_coords.append(coords_containers[extra_number_id][idcs_valid, :])
-            list_ids.append(np.full(flux_arr[idcs_valid, :].shape[0], extra_number_id))
-
+print(f'Stacking the tables')
 total_sample = np.hstack([np.hstack(list_ids).reshape(-1, 1), np.vstack(list_coords)])
 total_sample = np.hstack([total_sample, np.vstack(list_fluxes)])
 
 # Convert to dataframe and save it
 column_names = np.full(box_pixels, 'Pixel')
-column_names = ['spectral_number', 'int_ratio', 'res_ratio'] + list(np.char.add(column_names, np.arange(box_pixels).astype(str)))
+column_names = ['shape_class', 'int_ratio', 'res_ratio'] + list(np.char.add(column_names, np.arange(box_pixels).astype(str)))
 
+print(f'Saving to: {sample_database}')
+# lime.save_frame(f'{output_folder}/training_multi_sample_{version}.fits', sample_database)
 sample_db = pd.DataFrame(data=total_sample, columns=column_names)
-sample_db.to_csv(sample_database, index=False)
+sample_db.to_csv(sample_database, index=False, compression='gzip')
