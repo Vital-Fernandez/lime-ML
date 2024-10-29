@@ -13,7 +13,7 @@ label_dict = {'sigma_lambda_ratio': r'$\frac{\sigma_{gas}}{\Delta\lambda_{inst}}
               'amp_noise_ratio': r'$\frac{A_{gas}}{\sigma_{noise}}$'}
 
 # Load cfg
-cfg_file = '../3_gamma/training_sample_v3.toml'
+cfg_file = '../3_gamma/training_sample_v3_old.toml'
 cfg = lime.load_cfg(cfg_file)
 output_folder = Path(cfg['data_location']['output_folder'])
 version = cfg['data_grid']['version']

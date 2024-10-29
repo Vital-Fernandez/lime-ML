@@ -16,10 +16,10 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.metrics import confusion_matrix
-# from sklearn.metrics import precision_score, recall_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedShuffleSplit
-
+import gc
+import sys
 
 STANDARD_PLOT = theme.fig_defaults()
 STANDARD_PLOT['axes.labelsize'] = 20
@@ -316,6 +316,29 @@ def save_search_results(search_algorithm, model_cfg, label_cfg, x_test, y_test, 
     joblib.dump(search_algorithm, search_path)
 
     return
+
+def get_memory_usage_of_variables():
+    # Function to get memory usage of global variables
+    gc.collect()  # Force garbage collection
+
+    memory_usage = []
+
+    # Loop through all global variables
+    for var_name, var_value in globals().items():
+        try:
+            var_size = sys.getsizeof(var_value)
+            # Convert the size from bytes to MB and store the variable name and size
+            memory_usage.append((var_name, var_size / (1024 * 1024)))  # Convert bytes to MB
+        except Exception as e:
+            print(f'Could not get size of {var_name}: {e}')
+
+    # Sort variables by size in descending order
+    memory_usage.sort(key=lambda x: x[1], reverse=True)
+
+    # Print the top 10 largest variables
+    print("Top 10 largest variables by memory usage:")
+    for var_name, var_size in memory_usage[:10]:
+        print(f'Variable "{var_name}": {var_size:.2f} MB')
 
 
 class TrainingSampleScaler:

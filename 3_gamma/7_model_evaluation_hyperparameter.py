@@ -15,7 +15,7 @@ results_df = pd.read_csv(summary_txt_file, sep='\s+', header=0, index_col=0)
 
 estimators_depth_pairs = [[20, 4], [20, 6], [20, 8],
                           [40, 4], [40, 6], [40, 8],
-                          [40, 4], [40, 6], [40, 8]]
+                          [60, 4], [60, 6], [60, 8]]
 
 max_features_list = ['sqrt']
 

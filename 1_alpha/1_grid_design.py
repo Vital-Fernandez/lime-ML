@@ -11,7 +11,7 @@ PLOT_CONF['axes.labelsize'] = 20
 
 rcParams.update(PLOT_CONF)
 
-cfg = lime.load_cfg('../3_gamma/training_sample_v3.toml')
+cfg = lime.load_cfg('../3_gamma/training_sample_v3_old.toml')
 fits_folder = Path(cfg['data_location']['fits_folder'])
 output_folder = Path(cfg['data_location']['fits_folder'])
 

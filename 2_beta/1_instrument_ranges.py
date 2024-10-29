@@ -5,7 +5,7 @@ from lime.recognition import detection_function
 from tools import STANDARD_PLOT, c_kmpers
 
 
-cfg = lime.load_cfg('../3_gamma/training_sample_v3.toml')
+cfg = lime.load_cfg('../3_gamma/training_sample_v3_old.toml')
 
 # S/N evolution with the spectrum and emission parameters
 amp_array = np.array([1, 2, 3, 4, 5, 10])

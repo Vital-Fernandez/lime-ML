@@ -7,7 +7,7 @@ from tools import detection_function
 from plots import PLOT_CONF, LineVisualizationMapper, line_type_color
 from lime.plots import STANDARD_PLOT
 
-cfg = lime.load_cfg('../3_gamma/training_sample_v3.toml')
+cfg = lime.load_cfg('../3_gamma/training_sample_v3_old.toml')
 output_folder = Path(cfg['data_location']['output_folder'])
 output_database = output_folder/f'manual_selection_db.txt'
 

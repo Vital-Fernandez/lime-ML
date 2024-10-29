@@ -1,0 +1,262 @@
+[data_labels]
+fits_folder = "D:/AstroData/CEERS_spectra_visualization_tutorial"
+output_folder = "/home/vital/Astrodata/LiMe_ml"
+sample_prefix = "training_multi_sample"
+version = 'v4'
+scale = 'min-max'
+
+[training_data_v4]
+
+# Global
+box_pixels = 12
+n_sigma = 6
+err_n_sigma = 4             #Number of sigma to consider the error
+res-ratio_min = 0.1
+int-ratio_min = 0.01
+int-ratio_max = 10000
+
+# Intensity ratio (line amplitude / sigma noise) parameters
+int-ratio_log_base = 10000
+int-ratio_points = 7000 #8000
+
+# Resolution ratio (line sigma / instrument resolution) parameters
+res-ratio_points = 700
+instr_res = 1
+
+# Imagization parameters
+conversion_array_min_max = [0.0, 0.03125, 0.0625 , 0.09375, 0.125  , 0.15625, 0.1875 ,
+                            0.21875, 0.25   , 0.28125, 0.3125 , 0.34375, 0.375  , 0.40625,
+                            0.4375 , 0.46875, 0.5    , 0.53125, 0.5625 , 0.59375, 0.625  ,
+                            0.65625, 0.6875 , 0.71875, 0.75   , 0.78125, 0.8125 , 0.84375,
+                            0.875  , 0.90625, 0.9375 , 0.96875, 1.0]
+
+# Continuum configuration
+noise_loc = 0
+noise_min = 1
+noise_max = 100.0
+
+cont_level = 0
+angle_min = -45
+angle_max = 45
+
+uncrop_array_size = 400
+
+# Line configuration
+mu_line = 0
+headers =['amp', 'sigma',
+          'noise', 'delta',
+          'amp_noise_ratio', 'sigma_lambda_ratio',
+          'intg_flux', 'intg_flux_err',
+          'profile_flux', 'profile_flux_err',
+          'flux_true', 'true_err',
+          'cont', 'cont_err',
+          'm_cont', 'n_cont',
+          'line_pixels', 'box_pixels',
+          'detection', 'success_fitting',
+          'mu_index']
+
+# Classes list:
+classes.'undefined' = 0
+classes.'white-noise' = 1
+classes.'continuum' = 2
+classes.'emission' = 3
+classes.'cosmic-ray' = 4
+classes.'pixel-line' = 5
+classes.'broad' = 6
+classes.'doublet' = 7
+classes.'peak' = 8
+classes.'absorption' = 9
+classes.'dead-pixel' = 10
+
+white_noise.'min_int_ratio' = 0.01
+white_noise.'max_int_ratio' = 0.3
+
+broad.'min_detection_factor' = 2
+broad.'narrow_broad_min_factor' = 2
+broad.'narrow_broad_max_factor' = 0.5
+broad.'broad_int_max_factor' = 0.5
+
+cosmic-ray.'cosmic-ray_boundary' = 100
+
+doublet.'min_res_ratio' = 1.2
+doublet.'max_res_ratio' = 1.6
+doublet.'min_detection_factor' = 10
+doublet.'res-ratio_difference_factor' = [0.8, 1.2]
+doublet.'int-ratio_difference_factor' = [0.3, 3]
+doublet.'min_int_ratio' = 1000
+
+peak.'min_res_addition' = 1
+peak.'max_res_addition' = 1
+
+[2categories_v2]
+sample_prefix = "training_multi_sample"
+version = 'v3'
+scale = 'min-max'
+sample_size = 100000
+test_sample_size_fraction = 0.1
+
+replace_labels.'emission' = ['cosmic-ray', 'pixel-line']
+categories = ['white-noise', 'emission']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 1
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[8categories_v4_175000points_angleSample_numpy_array]
+sample_prefix = "training_multi_sample"
+version = 'v4'
+scale = 'min-max'
+sample_size = 175000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'continuum', 'pixel-line', 'cosmic-ray', 'emission', 'doublet', 'dead-pixel', 'absorption']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 0
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[8categories_v4_175000points_angleSample]
+sample_prefix = "training_multi_sample"
+version = 'v4'
+scale = 'min-max'
+sample_size = 175000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'continuum', 'pixel-line', 'cosmic-ray', 'emission', 'doublet', 'dead-pixel', 'absorption']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 2
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[6categories_v4_200000points_angleSample]
+sample_prefix = "training_multi_sample"
+version = 'v4'
+scale = 'min-max'
+sample_size = 200000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'continuum', 'pixel-line', 'cosmic-ray', 'emission', 'doublet']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 2
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+[6categories_v4_100000points_flat_cont]
+sample_prefix = "training_multi_sample"
+version = 'v4'
+scale = 'min-max'
+sample_size = 100000
+test_sample_size_fraction = 0.1
+
+categories = ['white-noise', 'continuum', 'pixel-line', 'cosmic-ray', 'emission', 'doublet']
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+estimator_params."n_estimators" = 60
+estimator_params."max_depth" = 8
+estimator_params."max_features" = 'sqrt'
+estimator_params."verbose" = 2
+estimator_params."n_jobs" = 15
+estimator_params."min_samples_split" = 2000
+estimator_params."min_samples_leaf" = 2000
+
+
+[colors]
+undefined = 'black'
+white-noise = '#C41E3A'     # Red
+continuum = '#F48CBA'       # Pink
+emission = '#00FF98'        # Spring Green
+cosmic-ray= '#FFF468'       # Yellow
+pixel-line = '#0070DD'      # Blue
+broad = '#A330C9'           # Dark magenta
+doublet = '#3FC7EB'         # Light blue
+peak = '#C69B6D'            # Tan
+absorption = '#FF7C0A'      # Orange
+dead-pixel = '#8788EE'      # Purple
+
+
+[param_search_first]
+estimator."module" = "sklearn.ensemble"
+estimator."class" = "RandomForestClassifier"
+estimator_params."random_state" = 42
+#estimator_params."scoring" = "f1_weighted"
+
+param_distributions."n_estimators" = [1, 100]
+param_distributions."max_depth" = [1, 10]
+
+search_params."random_state" = 42
+search_params."n_jobs" = 20
+search_params."verbose" = 4
+search_params."n_iter" = 20
+search_params."cv" = 3
+#search_params."scoring" = 'f1'
+
+[training_algorithms]
+train_faction = 0.9
+RandomForestClassifier_first.'n_estimators' = 300
+RandomForestClassifier_first.'n_jobs' = -1
+RandomForestClassifier_first.'max_depth' = 15
+RandomForestClassifier_first.'min_samples_leaf' = 1000
+RandomForestClassifier_first.'min_samples_split' = 500
+RandomForestClassifier_first.'class_weight' = "balanced"
+RandomForestClassifier_first.'verbose' = 1
+
+[disp_wavelength_ranges]
+example_dispensers = ['MIKE_BLUE', 'MIKE_RED', 'XSHOOTER_UVB',
+                      'XSHOOTER_VIS', 'XSHOOTER_NIR', 'NIRSPEC_PRISM', 'NIRSPEC_G235M']
+
+MIKE_BLUE_wave = [3200.0, 5000.0]
+MIKE_RED_wave = [4900.0, 10000.0]
+MIKE_BLUE_R = [22000.0, 28000.0]
+MIKE_RED_R = [65000.0, 83000.0]
+
+XSHOOTER_UVB_wave = [2936.0, 5930.0]
+XSHOOTER_VIS_wave = [5253.0, 10489.0]
+XSHOOTER_NIR_wave = [9827.0, 24807.0]
+
+XSHOOTER_UVB_R = [3300, 9100]
+XSHOOTER_VIS_R = [5400, 17400]
+XSHOOTER_NIR_R = [3500, 11300]
+
+SDSS_wave = [3800, 9000]
+SDSS_R = [2000, 2000]
+
+NIRSPEC_PRISM_wave =[5000, 60000]
+NIRSPEC_G235M_wave =[1500, 35000]
+
+NIRSPEC_PRISM_R =[30.0, 422.0]
+NIRSPEC_G235M_R =[636.0, 1500.0]
+
+DESI_B_R = [2000.0, 5000.0] # Or 9000
+DESI_R_R = [2000.0, 5000.0]
+DESI_Z_R = [2000.0, 5000.0]
+
+DESI_B_WAVE = [3600.0, 6000.0]
+DESI_R_WAVE = [5600.0, 7800.0]
+DESI_Z_WAVE = [7400.0, 9900.0]
+
+

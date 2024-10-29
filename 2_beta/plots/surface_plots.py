@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt, rc_context
 from pathlib import Path
 import scipy
 
-cfg_file = '../../3_gamma/training_sample_v3.toml'
+cfg_file = '../../3_gamma/training_sample_v3_old.toml'
 cfg = lime.load_cfg(cfg_file)
 output_folder = Path(cfg['data_location']['output_folder'])
 

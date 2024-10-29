@@ -20,7 +20,7 @@ int-ratio_log_base = 10000
 int-ratio_points = 6000
 
 # Resolution ratio (line sigma / instrument resolution) parameters
-res-ratio_points = 500
+res-ratio_points = 600
 instr_res = 1
 
 # Imagization parameters

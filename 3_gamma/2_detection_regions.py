@@ -11,7 +11,7 @@ from lime.plots import theme
 plot_address = '/home/vital/Dropbox/detection_regions.png'
 
 # Configuration file
-cfg_file = r'training_sample_v3.toml'
+cfg_file = r'training_sample_v3_old.toml'
 cfg = lime.load_cfg(cfg_file)
 
 # Parameters

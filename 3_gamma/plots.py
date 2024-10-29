@@ -5,18 +5,6 @@ from lime.recognition import detection_function, cosmic_ray_function
 from matplotlib.lines import Line2D
 
 
-# Default colors
-color_dict = {'undefined': 'black',
-            'white-noise': '#C41E3A',  # Red
-            'emission': '#00FF98',     # Spring Green
-            'cosmic-ray': '#FFF468',   # Yellow
-            'pixel-line': '#FF7C0A',   # Orange
-            'broad': '#A330C9',        # Dark magenta
-            'doublet': '#3FC7EB',      # Light blue
-            'peak': '#C69B6D'          # Tan
-            }
-
-
 def scatter_plot(ax, x_arr, y_arr, labels_arr, feature_list, color_dict, alpha=0.5, idx_target=None,
                  detection_range=None):
 
@@ -68,7 +56,8 @@ def parse_fig_cfg(fig_cfg=None, ax_diag=None, ax_line=None):
     return {'fig': fig_cfg, 'ax1': ax_diag, 'ax2': ax_line}
 
 
-def diagnostics_plot(model_cfg=None, categories=None, missmatch_df=None, fig_cfg=None, ax_cfg=None):
+def diagnostics_plot(model_cfg=None, categories=None, missmatch_df=None, fig_cfg=None, ax_cfg=None, color_dict=None,
+                     output_address=None):
 
     fig_cfg = theme.fig_defaults({'axes.labelsize': 10, 'axes.titlesize':10, 'figure.figsize': (4, 4),
                                   'hatch.linewidth': 0.3, "legend.fontsize" : 8})
@@ -181,6 +170,10 @@ def diagnostics_plot(model_cfg=None, categories=None, missmatch_df=None, fig_cfg
             ax.legend(handles=handles, labels=labels, loc='lower center', ncol=2, framealpha=0.5)
 
         plt.tight_layout()
+        if output_address is not None:
+            plt.savefig(output_address, )
+            plt.savefig(f'hyper_parameter_search.png', bbox_inches='tight')
+
         plt.show()
 
     return
@@ -189,8 +182,8 @@ def diagnostics_plot(model_cfg=None, categories=None, missmatch_df=None, fig_cfg
 
 class SampleReviewer:
 
-    def __init__(self, sample_df, color_dict, detection_range=None, fig_cfg=None, ax_diag=None, ax_line=None,
-                 base=10000, sample_size = 5000):
+    def __init__(self, sample_df, color_dict, fig_cfg=None, ax_diag=None, ax_line=None,
+                 base=10000, sample_size = 5000, column_labels='shape_class'):
 
 
         crop_df = sample_df.sample(sample_size)
@@ -199,9 +192,9 @@ class SampleReviewer:
         self.x_coords = crop_df['res_ratio'].to_numpy()
         self.y_coords = crop_df['int_ratio'].to_numpy()
         self.y_coords_log = np.log10(self.y_coords)/np.log10(self.y_base)
-        self.id_arr = crop_df['shape_class'].to_numpy()
+        self.id_arr = crop_df[column_labels].to_numpy()
         self.classes = np.sort(np.unique(self.id_arr))
-        self.data_df = crop_df.iloc[:, 3:]
+        self.data_df = crop_df.loc[:, 'Pixel0':]
         self.wave_range = np.arange(self.data_df.columns.size)
 
         self.idx_current = None

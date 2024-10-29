@@ -6,7 +6,7 @@ from tools import load_nirspec_fits, ml_line_detection
 
 
 # Data location
-cfg = lime.load_cfg('../3_gamma/training_sample_v3.toml')
+cfg = lime.load_cfg('../3_gamma/training_sample_v3_old.toml')
 fits_folder = Path(cfg['data_location']['fits_folder'])
 output_folder = Path(cfg['data_location']['output_folder'])
 fits_file = fits_folder/'F170LP-G235M_NRS1/fluxcal/F170LP-G235M_NRS1_s40017921_fluxcal_x1d.fits'

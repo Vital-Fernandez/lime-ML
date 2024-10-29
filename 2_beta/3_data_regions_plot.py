@@ -8,7 +8,7 @@ from tools import STANDARD_PLOT
 from lime.recognition import detection_function
 
 # Configuration file
-cfg_file = '../3_gamma/training_sample_v3.toml'
+cfg_file = '../3_gamma/training_sample_v3_old.toml'
 cfg = lime.load_cfg(cfg_file)
 sample_params = cfg['sample_data_v3']
 

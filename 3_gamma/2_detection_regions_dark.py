@@ -12,7 +12,7 @@ from pathlib import Path
 output_folder = Path('/home/vital/Dropbox/Astrophysics/Seminars/BootCamp2025')
 
 # Configuration file
-cfg_file = r'training_sample_v3.toml'
+cfg_file = r'training_sample_v3_old.toml'
 cfg = lime.load_cfg(cfg_file)
 
 # Parameters

@@ -8,7 +8,7 @@ from plots import PLOT_CONF, plot_ratio_distribution, plot_line_window
 
 
 # Load the configuration parameters
-cfg = lime.load_cfg('../3_gamma/training_sample_v3.toml')
+cfg = lime.load_cfg('../3_gamma/training_sample_v3_old.toml')
 BOX_SIZE = int(cfg['ml_grid_design']['box_size_pixels'])
 SAMPLE_SIZE = int(cfg['ml_grid_design']['sample_size'])
 TRUE_LINE_FRACTION = cfg['ml_grid_design']['sample_line_percentage']

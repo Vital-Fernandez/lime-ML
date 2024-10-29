@@ -1,13 +1,11 @@
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt, rc_context
-from matplotlib.widgets import Cursor
+
 import lime
 from pathlib import Path
 from lime.plots import theme
 from plots import SampleReviewer
 from model_tools import stratified_train_test_split
-
 
 
 # Figure format
@@ -28,8 +26,7 @@ cfg = sample_params[f'training_data_{version}']
 
 # Read the sample database
 output_folder = Path(sample_params['data_labels']['output_folder'])/version
-# sample_database = f'{output_folder}/{sample_prefix}_{version}.csv'
-sample_database = f'{output_folder}/{sample_prefix}_{version}_{scale}.csv'
+sample_database = f'{output_folder}/{sample_prefix}_{version}.csv'
 database_df = pd.read_csv(sample_database)
 
 n_points = 5000
@@ -37,7 +34,7 @@ list_features = ['white-noise', 'continuum', 'dead-pixel', 'absorption', 'double
 res_range = np.linspace(cfg["res-ratio_min"], cfg["box_pixels"]/cfg["n_sigma"], num=100)
 
 df_train, df_test = stratified_train_test_split(database_df, list_features, n_points, test_size=0.2)
-diag = SampleReviewer(df_train, color_dict=sample_params['colors'])
+diag = SampleReviewer(df_train, color_dict=sample_params['colors'], sample_size=n_points)
 diag.interactive_plot()
 
 # diag = SampleReviewer(df_test, color_dict=sample_params['colors'], detection_range=res_range)

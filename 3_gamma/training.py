@@ -96,11 +96,11 @@ def run_loaddb_and_training(database_address, model_cfg, list_labels, review_sam
                                                         test_size=fit_cfg['test_sample_size_fraction'])
         x, y = df_train.iloc[:, 3:], df_train.iloc[:, 0]
 
-        # if review_sample:
-        #     category_sample_plot = 5000 if y.size < (len(fit_cfg['categories']) * 5000) else np.floor(y.size/len(fit_cfg['categories']))
-        #     res_range = np.linspace(df_test['res_ratio'].min(), df_test['res_ratio'].max(), 100)
-        #     diag = SampleReviewer(df_test, color_dict=model_cfg['colors'], detection_range=res_range, sample_size=category_sample_plot)
-        #     diag.interactive_plot()
+        if review_sample:
+            category_sample_plot = 5000 if y.size < (len(fit_cfg['categories']) * 5000) else np.floor(y.size/len(fit_cfg['categories']))
+            res_range = np.linspace(df_test['res_ratio'].min(), df_test['res_ratio'].max(), 100)
+            diag = SampleReviewer(df_test, color_dict=model_cfg['colors'], detection_range=res_range, sample_size=category_sample_plot)
+            diag.interactive_plot()
 
         # Review the training sample
         if review_sample:
@@ -118,7 +118,9 @@ def run_loaddb_and_training(database_address, model_cfg, list_labels, review_sam
         print(f'- Settings: {fit_cfg["estimator_params"]}\n')
         start_time = time()
         ml_function = estimator(**estimator_params)
-        ml_function.fit(x, y)
+
+        y_int = np.vectorize(model_cfg['training_data_v4']['classes'].get)(y.to_numpy())
+        ml_function.fit(x.to_numpy(), y_int)
         end_time = np.round((time()-start_time)/60, 2)
         print(f'- completed ({end_time} minutes)')
 
@@ -139,7 +141,8 @@ def run_loaddb_and_training(database_address, model_cfg, list_labels, review_sam
 
         # Setting test set
         x, y = df_test.iloc[:, 3:], df_test.iloc[:, 0]
-
+        x = x.to_numpy()
+        y = np.vectorize(model_cfg['training_data_v4']['classes'].get)(y.to_numpy())
         # # if review_sample:
         # if review_sample:
         #     category_sample_plot = 5000 if y.size < len(fit_cfg['categories']) * 5000 else y.size

@@ -11,7 +11,7 @@ from tools import algorithm_dict
 
 # Read configuration
 n_cpus = joblib.cpu_count(only_physical_cores=True)
-cfg_file = '../3_gamma/training_sample_v3.toml'
+cfg_file = '../3_gamma/training_sample_v3_old.toml'
 cfg = lime.load_cfg(cfg_file)
 output_folder = Path(cfg['data_location']['output_folder'])
 version = cfg['data_grid']['version']

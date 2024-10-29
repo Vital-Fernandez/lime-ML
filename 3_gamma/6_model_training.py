@@ -4,7 +4,7 @@ from training import run_loaddb_and_training
 
 
 # Read sample configuration
-cfg_file = 'training_sample_v3.toml'
+cfg_file = 'training_sample_v4.toml'
 sample_params = lime.load_cfg(cfg_file)
 
 version = sample_params['data_labels']['version']
@@ -16,5 +16,5 @@ data_folder = Path(sample_params['data_labels']['output_folder'])/version
 sample1D_database_file = data_folder/f'{sample_prefix}_{version}_{scale}.csv'
 
 # Run the training
-label = '6categories_v2_80000points'
+label = '8categories_v4_175000points_angleSample_numpy_array'
 run_loaddb_and_training(sample1D_database_file, sample_params, label, review_sample=False)

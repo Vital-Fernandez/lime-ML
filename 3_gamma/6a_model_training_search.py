@@ -20,7 +20,7 @@ from scipy.stats import randint
 from sklearn.model_selection import GridSearchCV
 
 # Read sample configuration
-cfg_file = 'training_sample_v3.toml'
+cfg_file = 'training_sample_v3_old.toml'
 sample_params = lime.load_cfg(cfg_file)
 
 version = sample_params['data_labels']['version']

@@ -1,5 +1,6 @@
 import lime
 import joblib
+import numpy as np
 from pathlib import Path
 from model_tools import read_sample_database, stratified_train_test_split
 from plots import diagnostics_plot
@@ -12,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 from matplotlib import pyplot as plt
 
 # Read sample configuration
-cfg_file = 'training_sample_v3.toml'
+cfg_file = 'training_sample_v4.toml'
 sample_params = lime.load_cfg(cfg_file)
 
 version = sample_params['data_labels']['version']
@@ -20,7 +21,7 @@ scale = sample_params['data_labels']['scale']
 sample_prefix = sample_params['data_labels']['sample_prefix']
 
 # Load the configuration
-label_model = 'training_data_v3'
+label_model = 'training_data_v4'
 data_cfg = sample_params[label_model]
 
 # Read the sample database
@@ -32,7 +33,8 @@ results_folder = Path(sample1D_database_file).parent / 'results'
 db_df = read_sample_database(sample1D_database_file, data_cfg)
 
 # Prepare training and testing sets
-label_fit = '5categories_v2_80000points'
+# /label_fit = '5categories_v2_80000points'
+label_fit = '8categories_v4_175000points_angleSample'
 fit_cfg = sample_params[label_fit]
 df_train, df_test = stratified_train_test_split(db_df, fit_cfg['categories'], fit_cfg['sample_size'],
                                                 test_size=fit_cfg['test_sample_size_fraction'])
@@ -45,18 +47,20 @@ ml_function = joblib.load(model_address)
 x_test, y_test = df_test.iloc[:, 3:], df_test.iloc[:, 0]
 y_pred = ml_function.predict(x_test)
 
-
 # Plot confusion matrix
-cm = confusion_matrix(y_test, y_pred)
+labels = fit_cfg['categories']
+cm = confusion_matrix(y_test, y_pred, labels=labels)
+cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
 print(cm)
 print(cm.shape)
 plt.figure(figsize=(7,7))
-sns.heatmap(cm, annot=True, fmt='d', cbar=False, xticklabels=fit_cfg['categories'],
-            yticklabels=fit_cfg['categories'])
+# sns.heatmap(cm, annot=True, fmt='d', cbar=False, xticklabels=labels, yticklabels=labels)
+sns.heatmap(cm_normalized, annot=True,  fmt='.0%', cbar=False, xticklabels=labels, yticklabels=labels)
 plt.ylabel('Actual')
 plt.xlabel('Predicted')
 plt.title('Multiclass Confusion Matrix')
+plt.savefig(f'{results_folder}/{label_fit}_confusion_matrix.png')
 plt.show()
 
 # # Load the model
