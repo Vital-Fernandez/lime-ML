@@ -1,15 +1,13 @@
 import numpy as np
 import pandas as pd
-
+from pathlib import Path
 import lime
 from lime.model import gaussian_model
 from lime.recognition import detection_function, cosmic_ray_function, broad_component_function
 
-from pathlib import Path
 from tqdm import tqdm
 from itertools import product
 from model_tools import get_memory_usage_of_variables
-import gc
 
 # Read sample configuration
 cfg_file = 'training_sample_v4.toml'

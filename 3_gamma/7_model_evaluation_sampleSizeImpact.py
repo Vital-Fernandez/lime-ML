@@ -58,7 +58,9 @@ with rc_context(theme.fig_defaults(format_figure)):
 
     ax.legend()
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('sample_size_impact.png', bbox_inches='tight', dpi=300)
 
+# plt.savefig(doc_images_folder / 'logo_dark_transparent.svg', bbox_inches='tight', transparent=True)
 
 
