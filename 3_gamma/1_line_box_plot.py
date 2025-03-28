@@ -1,8 +1,10 @@
 import lime
 import numpy as np
-from lime.plots import theme
+from lime import theme
+# from lime.plotting import theme
 from matplotlib import rc_context, pyplot as plt, rc
-from lime.model import gaussian_model, gaussian_area, FWHM_FUNCTIONS
+# from lime.model import gaussian_model, gaussian_area, FWHM_FUNCTIONS
+from lime.fitting.lines import gaussian_model, gaussian_area, FWHM_FUNCTIONS
 
 def FWHM_conv(sigma_km):
 
@@ -68,7 +70,7 @@ for i, sigma in enumerate(sigma_lines):
     R_range = R_formula(k_line, b_range, sigma, c_KMpS)
     lines_dict[sigma] = [np.array(b_range), np.array(R_range)]
 
-with rc_context(theme.fig_defaults()):
+with rc_context(theme.fig_defaults(user_fig={'figure.figsize':(8, 4), 'figure.dpi':600})):
 
     fig, ax1 = plt.subplots()
 
@@ -174,8 +176,8 @@ with rc_context(theme.fig_defaults()):
         axins.axhline(cont, color='black', linestyle='--')
 
     # Pointing arrow
-    axins.annotate('', xy=(-3.25, 7000), xytext=(3.25, 7000), arrowprops=dict(arrowstyle='<->', color='black', lw=1))
-    axins.text((-3.25 + 3.25) / 2, 7000-1200, r'$n_{\sigma} = 6$', ha='center', va='bottom', fontsize=5, color='black',
+    axins.annotate('', xy=(-4.25, 7000), xytext=(4.25, 7000), arrowprops=dict(arrowstyle='<->', color='black', lw=1))
+    axins.text((-3.25 + 3.25) / 2, 7000-1200, r'$n_{\sigma} = 8$', ha='center', va='bottom', fontsize=5, color='black',
                bbox=dict(facecolor='white', alpha=1, edgecolor='white', boxstyle='round,pad=0.01'))
     axins.set_yscale('log')
     axins.set_xticks(range_sigma_pixels)
@@ -194,7 +196,8 @@ with rc_context(theme.fig_defaults()):
     ax1.grid(axis='y', color='0.95')
     # ax1.legend()
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig('/home/vital/Dropbox/Astrophysics/Tools/LiMe/bands_creation.png')
 
 
 # delta_lamb = deltaLamb_formula(k_line, b_range, sigma)

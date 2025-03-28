@@ -1,9 +1,12 @@
 import lime
 import numpy as np
-from lime.plots import theme
+from lime import theme
 from matplotlib import rc_context, pyplot as plt, rc, cm, colors
-from lime.model import gaussian_model, gaussian_area, FWHM_FUNCTIONS
+from lime.fitting.lines import gaussian_model, gaussian_area, FWHM_FUNCTIONS
 from pathlib import Path
+
+theme.set_style('dark')
+
 
 def FWHM_conv(sigma_km):
 
@@ -26,7 +29,6 @@ def R_formula(k_const, b_line, sigma_line, c_light):
 def deltaLamb_formula(k_const, b_line, sigma_line):
 
     return (k_const * sigma_line)
-
 
 k_line = 2 * 3
 c_KMpS = 299792.458
@@ -67,8 +69,8 @@ text_sigma_ranges = ['HII galaxies\n' + r'$\left(L(H\beta) \propto \sigma_{H\bet
 cmap = cm.get_cmap('Oranges')
 norm = colors.Normalize(vmin=0, vmax=3)
 
-output_folder=Path('/home/vital/Dropbox/Astrophysics/Seminars/BootCamp2025')
-theme.set_style('dark')
+output_folder=Path('/home/vital/Dropbox/Astrophysics/Seminars/2024_BootCamp')
+# theme.set_style('dark')
 theme.colors['fg']
 lines_dict = {}
 for i, sigma in enumerate(sigma_lines):
@@ -205,9 +207,9 @@ with rc_context(fig_default):
     ax1.grid(axis='x', color=theme.colors['fg'], linewidth=0.25)
     ax1.grid(axis='y', color=theme.colors['fg'], linewidth=0.25)
     # ax1.legend()
-    plt.tight_layout()
     # plt.show()
-    plt.savefig(output_folder/'box_selector.png')
+    print(output_folder)
+    plt.savefig(output_folder/'box_selector_white.png', bbox_inches='tight')
 
 
 # delta_lamb = deltaLamb_formula(k_line, b_range, sigma)

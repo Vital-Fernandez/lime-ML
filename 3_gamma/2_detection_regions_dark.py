@@ -9,7 +9,7 @@ from lime.plots import theme
 from pathlib import Path
 
 # Output plot
-output_folder = Path('/home/vital/Dropbox/Astrophysics/Seminars/BootCamp2025')
+output_folder = Path('/home/vital/Dropbox/Astrophysics/Seminars/2024_BootCamp')
 
 # Configuration file
 cfg_file = r'training_sample_v3_old.toml'
@@ -29,7 +29,7 @@ x_pixel_lines = np.linspace(0, 0.6, 100)
 y_pixel_lines = cosmic_ray_function(x_pixel_lines)
 idcs_crop = y_pixel_lines > 5
 
-theme.set_style('dark')
+# theme.set_style('dark')
 fig_cfg = theme.fig_defaults({'figure.dpi': 150,
                               'axes.labelsize': 9,
                               'axes.titlesize':9,
@@ -135,4 +135,4 @@ with rc_context(fig_cfg):
     plt.tight_layout()
     plt.show()
     # plt.savefig(plot_address)
-    # plt.savefig(output_folder/'diagnostic_plot.svg')
+    # plt.savefig(output_folder/'diagnostic_plot.png')
